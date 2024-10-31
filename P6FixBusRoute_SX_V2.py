@@ -61,7 +61,7 @@ errorModification = "".join(errorModificationList)
 
 # Find the error messages in the SM_TESTING folder
 errorMessageDir = scenarioManagementPath + r"\Scenarios\S000008"  # Dir of the error messages
-errorMessageFile = errorMessageDir + r"\Messages.txt"
+
 
 # Message log
 errorMessageLog = busRoutesFixPath + r"\MessageLog.txt"
@@ -92,19 +92,6 @@ errorModTransferFile = busRoutesFixPath + r"\errorModTransferFile.tra"
 ########################################################
 ## Section 2.1: Read the Error Message
 
-# key words
-word = "Warning Line route"
-word1 = "Error Line route"
-wordTurn = ": Turn"
-wordTurnBlock = "is blocked for the transport system"  # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
-# link close error
-wordLink1 = "link"
-wordLink2 = " closed for the transport system B"  # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
-wordNoLinkProvide = "Error No link provided between node"
-### Remaining
-wordNoLineRouteItemN = "Error No line route item was found at node"
-wordNoLineRouteItemS = "Error No line route item was found at stop point"
-wordMojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
 
 
 # class NodeCheckList: get the lists of Node1, Node2 on bus routes between which the link/turn may be problematic
@@ -146,25 +133,35 @@ class NodeCheckList:
 
 # class ErrorNodes: read error message
 class ErrorNodes:
-    def __init__(self):
-        self.routeNumber = 0
+    def __init__(self, error_message_file):
+        self.errorMessageFile = error_message_file
+        self.word = "Warning Line route"
+        self.word1 = "Error Line route"
+        self.wordTurn = ": Turn"
+        self.wordTurnBlock = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
+        # link close error
+        self.wordLink1 = "link"
+        self.wordLink2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
+        self.wordNoLinkProvide = "Error No link provided between node"
+        self.wordNoLineRouteItemN = "Error No line route item was found at node"
+        self.wordNoLineRouteItemS = "Error No line route item was found at stop point"
+        self.wordMojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
 
     def read_error_file(self, errorRouteList_Class, nodeCheckList_Class):
-        """Read the error message file and extract route and node data."""
-        with open(errorMessageFile, "r") as fp:
+        with open(self.errorMessageFile, "r") as fp:
             lines = fp.readlines()
 
         counter1 = 0
         for line in lines:
             line = line.strip()
 
-            if all(word in line for word in [word1, wordTurn, wordTurnBlock]):
+            if all(word in line for word in [self.word1, self.wordTurn, self.wordTurnBlock]):
                 parts = line.split("->")
                 NodeT1 = parts[1][:8]
                 NodeT2 = parts[2][:8]
                 nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "Turn block")
 
-            if all(word in line for word in [wordLink1, wordLink2]):
+            if all(word in line for word in [self.wordLink1, self.wordLink2]):
                 numNodePair = line.count("(")
                 for _ in range(numNodePair):
                     parts = line.split("(")
@@ -173,20 +170,20 @@ class ErrorNodes:
                     nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "Link Close")
                     line = parts[1].split(")")[1]
 
-            if wordNoLinkProvide in line:
+            if self.wordNoLinkProvide in line:
                 parts = line.split("node")
                 NodeT1 = parts[1][1:9]
                 NodeT2 = parts[2][1:9]
                 nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "No Link")
 
-            if word in line or word1 in line:
+            if self.word in line or self.word1 in line:
                 startIndex = line.find(";") + 1
                 spaceIndex = line.find(" ", startIndex)
-                semiColonIndex = line.find(";", startIndex)
+                semiColonIndex = line.find(";")
 
                 busRouteNumber = line[startIndex:spaceIndex]
-                busRouteDir = line[spaceIndex + 1 : spaceIndex + 3]
-                direction = line[semiColonIndex + 1 : semiColonIndex + 2]
+                busRouteDir = line[spaceIndex + 1: spaceIndex + 3]
+                direction = line[semiColonIndex + 1: semiColonIndex + 2]
 
                 errorRouteList_Class.get_error_route(
                     counter1, busRouteNumber, busRouteDir, direction
@@ -271,12 +268,10 @@ class ModificationCheckList:
 
 ########################################################
 ## Section 2.3: Read the transfer file that adds fixed routes back
-# Key words to locate to the correct table
-word3 = "$+LINEROUTEITEM"  # Start
-word4 = "$+TIMEPROFILE"  # End
-
 
 class RouteNodes:
+    word3 = "$+LINEROUTEITEM"  # Start
+    word4 = "$+TIMEPROFILE"  # End
     def __init__(self):
         self.routeNumber = 0
 
@@ -306,7 +301,6 @@ class RouteNodes:
                 if word3 in line:
                     startLineIndex = True
 
-
 ########################################################
 ## Section 2.4: Read the list of Nodes and Stops along the problematic route(s)
 class ErrorNodeStopList:
@@ -332,7 +326,6 @@ class ErrorNodeStopList:
     def get_route(self):
         return self.routeName2
 
-
 ########################################################
 ## Section 2.5: Read the list of nodes along the problematic route(s)
 class ErrorNodeList:
@@ -356,7 +349,6 @@ class ErrorNodeList:
 
     def error_route_id(self):
         return self.currentRoute
-
 
 ########################################################
 ## Section 2.6: the list of error routes
@@ -662,7 +654,7 @@ nodelinks = []
 
 # ! The pairs of nodes recognised through "for count in range(numOfNodes-1)" iretation are all successive nodes along the original route
 for count in range(numOfNodes - 1):
-    print("Checkng Count:", count)
+    # print("Checkng Count:", count)
     check_node1 = errorNodeList1[count]
     checkNode2 = errorNodeList1[count + 1]
     checkRouteThisNode = errorRouteList[count]
@@ -859,7 +851,9 @@ curScenario.LoadInput()
 
 
 # show warning
-def show_messages(all_messages):
+def show_n_save_messages(all_messages):
+    #save the logging message
+    data_logger.info(all_messages)
     # Create the main window
     root = tk.Tk()
     root.title("Route Review Messages")
@@ -889,4 +883,4 @@ def show_messages(all_messages):
     root.mainloop()
 
 
-show_messages(all_messages)
+show_n_save_messages(all_messages)

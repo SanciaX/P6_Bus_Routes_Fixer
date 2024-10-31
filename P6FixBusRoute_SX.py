@@ -505,7 +505,7 @@ Visum.SetErrorFile(errorMessageLog)#writing error message on a defined file
 #errorScenario.LoadInput()
 
 ########################################################
-## Section 3.2: Define objectives through Classe
+## Section 3.2: Define objectives through Classes
 errorNodeClass=ErrorNodes() # read error message
 nodeCheckList_Class=NodeCheckList()
 errorRouteListClass=ErrorRouteList() # the list of error routes
