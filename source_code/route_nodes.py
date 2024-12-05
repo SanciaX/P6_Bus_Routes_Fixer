@@ -9,7 +9,7 @@ class RouteNodes:
 
     def read_route_file(self, error_node_list_class, node_stop_list_class):
         with open(self.route_added_transfer_file_start, "r") as fp:
-            # routeAddedTransferFileStart is defined in the beginning of the main script
+            # route_added_transfer_file_start is defined in the beginning of the main script
             lines = fp.readlines()
             start_line_index = False
             counter1 = -1

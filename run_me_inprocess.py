@@ -9,7 +9,7 @@ Instructions:
 
 """
 
-#import logging
+import logging
 import shutil
 #import tkinter as tk
 #from tkinter import ttk
@@ -29,30 +29,16 @@ from logs.logger_configuration import *
 from source_code.show_n_save_messages import show_n_save_messages
 
 ###### PREPARATIONS: READ/COPY FILES FROM SCENARIO MANAGEMENT AND DEFINE CLASSES
-# Initialise PTV COM object
-Visum = win32com.client.gencache.EnsureDispatch("Visum.Visum.24")
-# Visum = win32com.client.Dispatch("Visum.Visum.24")
+## Save .tra, .net, .ver files from Scenario Management
+Visum = win32com.client.gencache.EnsureDispatch("Visum.Visum.25") # Visum = win32com.client.Dispatch("Visum.Visum.25")
 logging.info(f"PTV Visum started: {Visum}")
-
-# Load Scenario Management
 C = win32com.client.constants
 this_project = Visum.ScenarioManagement.OpenProject(scenario_management_file)
-workingScenarioVersion = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(working_scenario_id)  # scenario with correct network
-workingScenarioVersion.LoadInput()  # load the network of the last  working scenario
-Visum.SaveVersion(working_scenario_name)  # save version file
-
-# Load the *.net file with error
-error_scenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(error_scenario_id)
-error_scenario.LoadInput()  # Loads the input version files (base version and all modifications) for this scenario
-Visum.IO.SaveNet(
-    network_file_name,
-    LayoutFile="",
-    EditableOnly=True,
-    NonDefaultOnly=True,
-    ActiveNetElemsOnly=False,
-    NonEmptyTablesOnly=True,
+from source_code.copy_files_from_scenario_management import copy_files_from_scenario_management
+copy_files_from_scenario_management(
+    this_project, error_scenario_id, error_message_dir,
+    working_scenario_name, network_file_name, error_message_log
 )
-Visum.SetErrorFile(error_message_log)  # set error log
 
 # Initialise classes and load error data
 error_node_class = ErrorNodes(error_message_file)  # read error message
@@ -215,7 +201,7 @@ for replace in node_links_replace:
             link[2] = replace[2]
 
 # Create a new .ver for shortest path search (where problematic routes have been deleted)
-Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
+Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
 Visum2.LoadVersion(working_scenario_delete_routes_name)
 Visum2.ApplyModelTransferFile(error_modification)
 Visum2.IO.LoadNet(network_file_name, ReadAdditive=False)
@@ -281,7 +267,7 @@ if search_chains:
     fix_bus_route_class.fix_routes(
         nodes_delete_list, search_chains, route_transfer_file_temp_name, route_added_transfer_file_final
     )
-Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
+Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
 Visum3.LoadVersion(working_scenario_delete_routes_name)
 # create AddNetRead-Object and specify desired conflict avoiding method
 anrController = Visum3.IO.CreateAddNetReadController()
@@ -355,21 +341,21 @@ shutil.copy2(route_added_transfer_file_final, mod_file_name3)  # to keep the sta
 
 ###### apply the Modification with error
 
-old_mod_set = error_scenario.AttValue("MODIFICATIONS")
-print(old_mod_set)
+#old_mod_set = error_scenario.AttValue("MODIFICATIONS")
+#print(old_mod_set)
 new_mod_set = old_mod_set[:-1] + str(new_mod_no1) + "," + str(new_mod_no2) + "," + str(new_mod_no3)
 #
 print(new_mod_set)
 # curScenario=this_project.Scenarios.ItemByKey(8)
 curScenario = this_project.AddScenario()
-curScenarioNumber = curScenario.AttValue("NO")
+curScenarioId = curScenario.AttValue("NO")
 curScenario.SetAttValue("CODE", "BusRouteFixed")
 curScenario.SetAttValue("PARAMETERSET", "1")
 # curScenario.SetAttValue("MODIFICATIONS","1,2,3,5,7,11")##11 should be from new mod file and others from user input scenario
 curScenario.SetAttValue("MODIFICATIONS", new_mod_set)
 # error_message_file=error_message_dir+str(error_scenario_id)+".txt"
-errorMessageFile1 = error_message_dir + str(curScenarioNumber) + ".txt"  # new error file
-Visum.SetErrorFile(errorMessageFile1)  # writing error message on a defined file
+errorMessageFileFixed = error_message_dir + str(curScenarioId) + ".txt"  # new error file
+Visum.SetErrorFile(errorMessageFileFixed)  # writing error message on a defined file
 curScenario.LoadInput()
 
 

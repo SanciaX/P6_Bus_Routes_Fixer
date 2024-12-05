@@ -5,22 +5,22 @@ class CheckNode12ok:
         self.checkNode1 = (
             []
         )  # checkNode1 is a list of Nodes that link to Node11 while Node21 has not been found to be linked to Node11
-        self.checkNode2 = (
+        self.check_node2 = (
             []
-        )  # Nodes checkNode2 is a list of Nodes that link to Node21. checkNode2 would be empty if a link between Node11 & Node21 is found
+        )  # Nodes check_node2 is a list of Nodes that link to Node21. check_node2 would be empty if a link between Node11 & Node21 is found
         self.node11 = 0  # '10032516'
         self.node21 = 0  # '10040442'
-        self.routeThisNode = 0
-        self.routeNextNode = 0
+        self.route_of_this_node = 0
+        self.route_of_next_node = 0
         self.node12ok = 999  #
         self.counter = 0
     def get_error_nodes2(
-        self, counter, node11, node21, route_this_node, route_next_node, nodes_check, nodes_type_check
+        self, counter, node11, node21, route_of_this_node, route_of_next_node, nodes_check, nodes_type_check
     ):
         self.node11 = str(node11.strip())  #'10032516'
         self.node21 = str(node21.strip())  #'10040442'
-        self.routeThisNode = route_this_node
-        self.routeNextNode = route_next_node
+        self.route_of_this_node = route_of_this_node
+        self.route_of_next_node = route_of_next_node
         self.node12ok = 999  #
         with open(self.network_file_name_short, "r") as fp:
             lines = fp.readlines()
@@ -28,7 +28,7 @@ class CheckNode12ok:
             for line in lines:
                 # check if node1 is present on a current line: if it's in, it will be added to checkNode1
                 if (
-                    route_this_node == route_next_node
+                    route_of_this_node == route_of_next_node
                 ):  # otherwise there is no need to search a path between node 1 and 2
                     if line.find(";B") != -1:  # check links with Bus system
                         if (

@@ -41,49 +41,49 @@ logging.debug("Script run")
 ##############################################################################
 
 # Section 1.1: User Input
-errorScenarioId = 8  # Scenario with bus route issues
-workingScenarioId = 2  # Last scenario without network errors
-errorModificationID = 2  # First modification where the route errors occur
+error_scenario_id = 8  # Scenario with bus route issues
+working_scenario_id = 2  # Last scenario without network errors
+error_modification_id = 2  # First modification where the route errors occur
 
 # Scenario management paths and files
-scenarioManagementFile = (
+scenario_management_file = (
     r"C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\SM_TESTING.vpdbx"
 )
-scenarioManagementPath = r"C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING"
-busRoutesFixPath = r"C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\Bus_Routes_Fix"  # Temp folder for bus route fixes
+scenario_management_path = r"C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING"
+bus_routes_fix_path = r"C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\Bus_Routes_Fix"  # Temp folder for bus route fixes
 
 
 ##Section 1.2 Define files
 # Error modification file in SM_TESTING folder
-errorModificationList = list(scenarioManagementPath + r"\Modifications\M000000.tra")
-errorModificationList[-len(str(errorModificationID)) - 4] = str(errorModificationID)
-errorModification = "".join(errorModificationList)
+error_modification_list = list(scenario_management_path + r"\Modifications\M000000.tra")
+error_modification_list[-len(str(error_modification_id)) - 4] = str(error_modification_id)
+error_modification = "".join(error_modification_list)
 
 # Find the error messages in the SM_TESTING folder
-errorMessageDir = scenarioManagementPath + r"\Scenarios\S000008"  # Dir of the error messages
+error_message_dir = scenario_management_path + r"\Scenarios\S000008"  # Dir of the error messages
 
 
 # Message log
-errorMessageLog = busRoutesFixPath + r"\MessageLog.txt"
+error_message_log = bus_routes_fix_path + r"\MessageLog.txt"
 
 # .ver files
-workingScenarioName = busRoutesFixPath + r"\scenarioWorking.ver"
-workingScenarioDeleteRoutesName = busRoutesFixPath + r"\scenarioWorkingDeleteRoutes.ver"
-workingScenarioLoadErrorMod = busRoutesFixPath + r"\workingScenarioLoadErrorMod.ver"
-workingScenarioRoutesFixedName = busRoutesFixPath + r"\scenarioWorkingRoutesFixed.ver"
-RouteSearchVersion = busRoutesFixPath + r"\RouteSearchVersion.ver"
+working_scenario_name = bus_routes_fix_path + r"\scenarioWorking.ver"
+working_scenario_delete_routes_name = bus_routes_fix_path + r"\scenarioWorkingDeleteRoutes.ver"
+working_scenario_load_error_mod = bus_routes_fix_path + r"\working_scenario_load_error_mod.ver"
+working_scenario_routes_fixed_name = bus_routes_fix_path + r"\scenarioWorkingRoutesFixed.ver"
+route_search_model = bus_routes_fix_path + r"\route_search_model.ver"
 
 # .net files
-networkFileName = busRoutesFixPath + r"\NetworkFileError.net"
-networkFileNameShort = busRoutesFixPath + r"\NetworkFileErrorShort.net"
+network_file_name = bus_routes_fix_path + r"\NetworkFileError.net"
+network_file_name_short = bus_routes_fix_path + r"\NetworkFileErrorShort.net"
 
 # .tra files
-routeDeletedTransferFile = busRoutesFixPath + r"\routeDeletedTransfer.tra"
-routeAddedTransferFileStart = busRoutesFixPath + r"\routeTransferFileStart.tra"
-routeTransferFileTempName = busRoutesFixPath + r"\routeTransferFileTemp.tra"
-routeAddedTransferFileFinal = busRoutesFixPath + r"\routeTransferFileFinal.tra"
-routesFixedTransferFile = busRoutesFixPath + r"\routeFixedTransferFile.tra"
-errorModTransferFile = busRoutesFixPath + r"\errorModTransferFile.tra"
+route_deleted_transfer_file = bus_routes_fix_path + r"\routeDeletedTransfer.tra"
+route_added_transfer_file_start = bus_routes_fix_path + r"\routeTransferFileStart.tra"
+route_transfer_file_temp_name = bus_routes_fix_path + r"\routeTransferFileTemp.tra"
+route_added_transfer_file_final = bus_routes_fix_path + r"\routeTransferFileFinal.tra"
+routes_fixed_transfer_file = bus_routes_fix_path + r"\routeFixedTransferFile.tra"
+error_mod_transfer_file = bus_routes_fix_path + r"\error_mod_transfer_file.tra"
 
 
 #############################################################################
@@ -96,26 +96,26 @@ errorModTransferFile = busRoutesFixPath + r"\errorModTransferFile.tra"
 
 # class NodeCheckList: get the lists of Node1, Node2 on bus routes between which the link/turn may be problematic
 class NodeCheckList:
-    MY_CLASS_VAR_1 = "1"
+    my_class_var_1 = "1"
     def __init__(self):
         self.anode1 = []
         self.anode2 = []
         self.routeName = []
-        self.errorType = []
+        self.error_type = []
 
-    def get_node_checkList(self, node1, node2, errorType):
+    def get_node_checklist(self, node1, node2, error_type):
         """
 
         :param node1:
         :param node2:
-        :param errorType:
+        :param error_type:
         :return: 
         """
 
-        """Get the list of node pairs along the route between which the route is problematic and the errorType between them."""
+        """Get the list of node pairs along the route between which the route is problematic and the error_type between them."""
         self.anode1 = self.anode1.append(node1)
         self.anode2 = self.anode2.append(node2)
-        self.errorType = self.errorType.append(errorType)
+        self.error_type = self.error_type.append(error_type)
 
     def get_check_node1(self):
         return self.anode1
@@ -128,53 +128,53 @@ class NodeCheckList:
 
         :return:
         """
-        return self.errorType
+        return self.error_type
 
 
 # class ErrorNodes: read error message
 class ErrorNodes:
     def __init__(self, error_message_file):
-        self.errorMessageFile = error_message_file
+        self.error_message_file = error_message_file
         self.word = "Warning Line route"
         self.word1 = "Error Line route"
-        self.wordTurn = ": Turn"
-        self.wordTurnBlock = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
+        self.word_turn = ": Turn"
+        self.word_turn_block = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
         # link close error
-        self.wordLink1 = "link"
-        self.wordLink2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
-        self.wordNoLinkProvide = "Error No link provided between node"
-        self.wordNoLineRouteItemN = "Error No line route item was found at node"
-        self.wordNoLineRouteItemS = "Error No line route item was found at stop point"
-        self.wordMojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
+        self.word_link1 = "link"
+        self.word_link2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
+        self.word_no_link_provide = "Error No link provided between node"
+        self.word_no_line_route_item_node = "Error No line route item was found at node"
+        self.word_no_line_route_item_stop = "Error No line route item was found at stop point"
+        self.word_mojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
 
-    def read_error_file(self, errorRouteList_Class, nodeCheckList_Class):
-        with open(self.errorMessageFile, "r") as fp:
+    def read_error_file(self, errorRouteList_Class, node_check_list_class):
+        with open(self.error_message_file, "r") as fp:
             lines = fp.readlines()
 
         counter1 = 0
         for line in lines:
             line = line.strip()
 
-            if all(word in line for word in [self.word1, self.wordTurn, self.wordTurnBlock]):
+            if all(word in line for word in [self.word1, self.word_turn, self.word_turn_block]):
                 parts = line.split("->")
                 NodeT1 = parts[1][:8]
                 NodeT2 = parts[2][:8]
-                nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "Turn block")
+                node_check_list_class.get_node_checklist(NodeT1, NodeT2, "Turn block")
 
-            if all(word in line for word in [self.wordLink1, self.wordLink2]):
+            if all(word in line for word in [self.word_link1, self.word_link2]):
                 numNodePair = line.count("(")
                 for _ in range(numNodePair):
                     parts = line.split("(")
                     NodeT1 = parts[1][:8]
                     NodeT2 = parts[1].split(">")[1][:8]
-                    nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "Link Close")
+                    node_check_list_class.get_node_checklist(NodeT1, NodeT2, "Link Close")
                     line = parts[1].split(")")[1]
 
-            if self.wordNoLinkProvide in line:
+            if self.word_no_link_provide in line:
                 parts = line.split("node")
                 NodeT1 = parts[1][1:9]
                 NodeT2 = parts[2][1:9]
-                nodeCheckList_Class.get_node_checkList(NodeT1, NodeT2, "No Link")
+                node_check_list_class.get_node_checklist(NodeT1, NodeT2, "No Link")
 
             if self.word in line or self.word1 in line:
                 startIndex = line.find(";") + 1
@@ -220,8 +220,8 @@ class ModificationCheckList:
                         if len(parts) > 2:
                             n2, n3 = int(parts[1]), int(parts[2])
                             if any(
-                                errorNodeList1[i] == str(n2) and errorNodeList1[i + 1] == str(n3)
-                                for i in range(len(errorNodeList1) - 1)
+                                error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
+                                for i in range(len(error_node_list1) - 1)
                             ):
                                 list0.append([n2, n3, 5])
 
@@ -237,8 +237,8 @@ class ModificationCheckList:
                         if len(parts) > 2:
                             n2, n3 = int(parts[1]), int(parts[2])
                             if any(
-                                errorNodeList1[i] == str(n2) and errorNodeList1[i + 1] == str(n3)
-                                for i in range(len(errorNodeList1) - 1)
+                                error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
+                                for i in range(len(error_node_list1) - 1)
                             ):
                                 list0.append([n2, n3, 4])
 
@@ -252,7 +252,7 @@ class ModificationCheckList:
                     elif "*" not in line and "$" not in line:
                         n_missing = line
                         if any(
-                            errorNodeList1[i] == n_missing for i in range(len(errorNodeList1) - 1)
+                            error_node_list1[i] == n_missing for i in range(len(error_node_list1) - 1)
                         ):
                             nodesDelete.append(n_missing)
 
@@ -276,7 +276,7 @@ class RouteNodes:
         self.routeNumber = 0
 
     def read_route_file(self, errorNodeList_Class, NodeStopList_Class):
-        with open(routeAddedTransferFileStart, "r") as fp:
+        with open(route_added_transfer_file_start, "r") as fp:
             lines = fp.readlines()
             startLineIndex = False
             counter1 = -1
@@ -303,15 +303,15 @@ class RouteNodes:
 
 ########################################################
 ## Section 2.4: Read the list of Nodes and Stops along the problematic route(s)
-class ErrorNodeStopList:
+class error_node_stop_list:
     def __init__(self):
         self.get_node_stop_list = [[0, 0] for _ in range(10000)]
-        self.routeName2 = [0] * 10000
+        self.route_name2 = [0] * 10000
         self.counter = 0
 
     def get_node_stop(self, counter, NodeStop, thisRoute):
         self.get_node_stop_list[counter] = NodeStop
-        self.routeName2[counter] = thisRoute
+        self.route_name2[counter] = thisRoute
         self.counter = counter
 
     def get_nodes_stop_count(self):
@@ -324,7 +324,7 @@ class ErrorNodeStopList:
         return self.get_node_stop_list[self.counter][1]
 
     def get_route(self):
-        return self.routeName2
+        return self.route_name2
 
 ########################################################
 ## Section 2.5: Read the list of nodes along the problematic route(s)
@@ -345,44 +345,44 @@ class ErrorNodeList:
         return self.node1
 
     def error_num_nodes(self):
-        return self.counter  # numOfNodes
+        return self.counter  # num_of_nodes
 
     def error_route_id(self):
         return self.currentRoute
 
 ########################################################
 ## Section 2.6: the list of error routes
-class ErrorRouteList:
+class error_route_list:
     def __init__(self):
-        self.routeNum = [0] * 100
-        self.routeDir = [0] * 100
-        self.routeDirection = [0] * 100
-        self.routeNameCheck = 0
+        self.route_num = [0] * 100
+        self.route_dir = [0] * 100
+        self.route_direction = [0] * 100
+        self.route_name_check = 0
         self.counting1 = 0
 
-    def get_error_route(self, counterRoute, routeNum, routeDir, routeDirection):
+    def get_error_route(self, counterRoute, route_num, route_dir, route_direction):
         if counterRoute == 0:
             self.counting1 = 0
-            self.routeNum[self.counting1] = routeNum
-            self.routeDir[self.counting1] = routeDir
-            self.routeDirection[self.counting1] = routeDirection
-            self.routeNameCheck = routeNum + routeDirection
+            self.route_num[self.counting1] = route_num
+            self.route_dir[self.counting1] = route_dir
+            self.route_direction[self.counting1] = route_direction
+            self.route_name_check = route_num + route_direction
 
-        if self.routeNameCheck != routeNum + routeDirection:
+        if self.route_name_check != route_num + route_direction:
             self.counting1 += 1
-            self.routeNum[self.counting1] = routeNum
-            self.routeDir[self.counting1] = routeDir
-            self.routeDirection[self.counting1] = routeDirection
-            self.routeNameCheck = routeNum + routeDirection
+            self.route_num[self.counting1] = route_num
+            self.route_dir[self.counting1] = route_dir
+            self.route_direction[self.counting1] = route_direction
+            self.route_name_check = route_num + route_direction
 
     def error_route(self):
-        return self.routeNum
+        return self.route_num
 
     def error_dir(self):
-        return self.routeDir
+        return self.route_dir
 
     def error_direction(self):
-        return self.routeDirection
+        return self.route_direction
 
     def error_line_direction(self):
         return self.lineDirection
@@ -396,26 +396,26 @@ class ErrorRouteList:
 ## Section 2.7: check if Node1, Node2 and the link in between is perfectly fine
 class CheckNode12ok:
     def get_error_nodes2(
-        self, counter, node11, node21, routeThisNode, routeNextNode, NodesCheck, NodesTypeCheck
+        self, counter, node11, node21, route_of_this_node, route_of_next_node, NodesCheck, NodesTypeCheck
     ):
         self.checkNode1 = (
             []
         )  # chekNodee1 is a list of Nodes that link to Node11 while Node21 has not been found to be linked to Node11
-        self.checkNode2 = (
+        self.check_node2 = (
             []
-        )  # Nodes checkNode2 is a list of Nodes that link to Node21. checkNode2 would be empty if a link between Node11 & Node21 is found
+        )  # Nodes check_node2 is a list of Nodes that link to Node21. check_node2 would be empty if a link between Node11 & Node21 is found
         self.node11 = str(node11.strip())  #'10032516'
         self.node21 = str(node21.strip())  #'10040442'
-        self.routeThisNode = routeThisNode
-        self.routeNextNode = routeNextNode
+        self.route_of_this_node = route_of_this_node
+        self.route_of_next_node = route_of_next_node
         self.node12ok = 999  #
-        with open(networkFileNameShort, "r") as fp:
+        with open(network_file_name_short, "r") as fp:
             lines = fp.readlines()
             node12ok = 0
             for line in lines:
                 # check if node1 is present on a current line: if it's in, it will be added to checkNode1
                 if (
-                    routeThisNode == routeNextNode
+                    route_of_this_node == route_of_next_node
                 ):  # otherwise there is no need to search a path between node 1 and 2
                     if line.find(";B") != -1:  # check links with Bus system
                         if (
@@ -496,61 +496,61 @@ Visum = win32com.client.gencache.EnsureDispatch("Visum.Visum.24")
 # Visum = win32com.client.Dispatch("Visum.Visum.24")
 print("PTV Visum is started " + str(Visum))
 C = win32com.client.constants
-thisProject = Visum.ScenarioManagement.OpenProject(scenarioManagementFile)
+this_project = Visum.ScenarioManagement.OpenProject(scenario_management_file)
 workingScenarioVersion = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(
-    workingScenarioId
+    working_scenario_id
 )  # scenario with correct network check if it's 3 or 2
 workingScenarioVersion.LoadInput()  # this command loads network of succesful scenario
 Visum.SaveVersion(
-    workingScenarioName
-)  # save .ver file to (workingScenarioName, with the file's location specified in the beginning
+    working_scenario_name
+)  # save .ver file to (working_scenario_name, with the file's location specified in the beginning
 
 # Create the latest *.net file with error (last scenario before error)
-errorScenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(
-    errorScenarioId
+error_scenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(
+    error_scenario_id
 )  # last scenario could be user input
-errorScenario.LoadInput()  # this command Loads the input version file (base version and all modifications) for this scenario into the running Visum
+error_scenario.LoadInput()  # this command Loads the input version file (base version and all modifications) for this scenario into the running Visum
 Visum.IO.SaveNet(
-    networkFileName,
+    network_file_name,
     LayoutFile="",
     EditableOnly=True,
     NonDefaultOnly=True,
     ActiveNetElemsOnly=False,
     NonEmptyTablesOnly=True,
 )
-Visum.SetErrorFile(errorMessageLog)  # writing error message on a defined file
-# errorScenario.LoadInput()
+Visum.SetErrorFile(error_message_log)  # writing error message on a defined file
+# error_scenario.LoadInput()
 
 ########################################################
 ## Section 3.2: Define objectives through Classes
-errorNodeClass = ErrorNodes()  # read error message
-nodeCheckList_Class = NodeCheckList()
-errorRouteListClass = ErrorRouteList()  # the list of error routes
-errorNodeClass.read_error_file(
-    errorRouteListClass, nodeCheckList_Class
-)  # GET ERROR ROUTE: call errorRouteListClass.get_error_route method, in which calls errorRouteList_Class.get_error_route(counter1,busRouteNumber,busRouteDir,direction)
-errorRouteList = errorRouteListClass.error_route()  # Return routeNum
-errorDirList = errorRouteListClass.error_dir()
-errorDirectionList = errorRouteListClass.error_direction()
+error_node_class = ErrorNodes()  # read error message
+node_check_list_class = NodeCheckList()
+error_route_list_class = error_route_list()  # the list of error routes
+error_node_class.read_error_file(
+    error_route_list_class, node_check_list_class
+)  # GET ERROR ROUTE: call error_route_list_class.get_error_route method, in which calls errorRouteList_Class.get_error_route(counter1,busRouteNumber,busRouteDir,direction)
+error_route_list = error_route_list_class.error_route()  # Return route_num
+error_dir_list = error_route_list_class.error_dir()
+error_direction_list = error_route_list_class.error_direction()
 
-errorNodesChecklist = nodeCheckList_Class.get_check_node1()  # list of all the nodes to check
-errorNodesChecklist2 = nodeCheckList_Class.get_check_node2()
-errorNodeTypeChecklist = nodeCheckList_Class.get_error_type()  # list of
-errorNodesCheck = [
-    (errorNodesChecklist[i], errorNodesChecklist2[i]) for i in range(len(errorNodesChecklist))
+error_nodes_checklist = node_check_list_class.get_check_node1()  # list of all the nodes to check
+error_nodes_checklist2 = node_check_list_class.get_check_node2()
+error_node_type_checklist = node_check_list_class.get_error_type()  # list of
+error_nodes_check = [
+    (error_nodes_checklist[i], error_nodes_checklist2[i]) for i in range(len(error_nodes_checklist))
 ]
-errorNodesTypeCheck = [
-    (errorNodesChecklist[i], errorNodesChecklist2[i], errorNodeTypeChecklist[i])
-    for i in range(len(errorNodesChecklist))
+error_nodes_type_check = [
+    (error_nodes_checklist[i], error_nodes_checklist2[i], error_node_type_checklist[i])
+    for i in range(len(error_nodes_checklist))
 ]
-print(f"Nodes to check and error types: {errorNodesTypeCheck}")
+print(f"Nodes to check and error types: {error_nodes_type_check}")
 
-node12okClass = CheckNode12ok()
-fixBusRouteClass = FixBusRoute()
+node12ok_class = CheckNode12ok()
+fix_bus_route_class = FixBusRoute()
 
-numOfRoutes = errorRouteListClass.error_route_count()
-errorRoute = errorRouteList[1]
-print(f"Number of Routes: {numOfRoutes}")
+num_of_routes = error_route_list_class.error_route_count()
+error_route = error_route_list[1]
+print(f"Number of Routes: {num_of_routes}")
 
 #############################################################################
 #############################################################################
@@ -558,39 +558,39 @@ print(f"Number of Routes: {numOfRoutes}")
 ########################################################
 
 # STEP 1 Load the working scenario to delete erroneous routes and create transfer files (1.deleted and 2.added)
-# routeDeletedTransferFile will be used as a new Modification
-# routeAddedTransferFileStart is where the routes will be fixed and then applied to the problematic
-Visum.LoadVersion(workingScenarioName)  # load previously exported .ver file
+# route_deleted_transfer_file will be used as a new Modification
+# route_added_transfer_file_start is where the routes will be fixed and then applied to the problematic
+Visum.LoadVersion(working_scenario_name)  # load previously exported .ver file
 
-for routeCount in range(numOfRoutes):
-    errorRoute = errorRouteList[routeCount]
-    errorDir = errorDirList[routeCount]
-    errorDirection = errorDirectionList[routeCount]
+for route_count in range(num_of_routes):
+    error_route = error_route_list[route_count]
+    error_dir = error_dir_list[route_count]
+    error_direction = error_direction_list[route_count]
 
-    errorRouteName = f"{errorRoute} {errorDir}".strip()
-    print(f"Error Route: {errorRoute} {errorDir} {errorDirection} {errorRouteName}")
+    error_route_name = f"{error_route} {error_dir}".strip()
+    print(f"Error Route: {error_route} {error_dir} {error_direction} {error_route_name}")
 
     # Delete the Route in error file and save version
-    routeToDelete = Visum.Net.LineRoutes.ItemByKey(errorRoute, errorDirection, errorRouteName)
-    if routeToDelete:
-        Visum.Net.RemoveLineRoute(routeToDelete)
+    route_to_delete = Visum.Net.LineRoutes.ItemByKey(error_route, error_direction, error_route_name)
+    if route_to_delete:
+        Visum.Net.RemoveLineRoute(route_to_delete)
 
-Visum.SaveVersion(workingScenarioDeleteRoutesName)
+Visum.SaveVersion(working_scenario_delete_routes_name)
 
 # Create a transfer file *.tra file from b to a (destination)
 Visum.GenerateModelTransferFileBetweenVersionFiles(
-    workingScenarioDeleteRoutesName,
-    workingScenarioName,
-    routeAddedTransferFileStart,
+    working_scenario_delete_routes_name,
+    working_scenario_name,
+    route_added_transfer_file_start,
     LayoutFile="",
     NonDefaultOnly=False,
     NonEmptyTablesOnly=True,
     WriteLayoutIntoModelTransferFile=True,
 )
 Visum.GenerateModelTransferFileBetweenVersionFiles(
-    workingScenarioName,
-    workingScenarioDeleteRoutesName,
-    routeDeletedTransferFile,
+    working_scenario_name,
+    working_scenario_delete_routes_name,
+    route_deleted_transfer_file,
     LayoutFile="",
     NonDefaultOnly=False,
     NonEmptyTablesOnly=True,
@@ -599,43 +599,43 @@ Visum.GenerateModelTransferFileBetweenVersionFiles(
 
 
 # Create a new modification to delete the routes
-newModification1 = thisProject.AddModification()
-newModification1.SetAttValue("Code", "Erroneous Routes Deleted")
-newModification1.SetAttValue(
+new_modification1 = this_project.AddModification()
+new_modification1.SetAttValue("Code", "Erroneous Routes Deleted")
+new_modification1.SetAttValue(
     "Description", "Copied from the last working modification and have problematic routes deleted"
 )
-newModNo1 = int(newModification1.AttValue("No"))
-thisModName1 = newModification1.AttValue("TraFile")
+new_mod_no1 = int(new_modification1.AttValue("No"))
+this_mod_name1 = new_modification1.AttValue("TraFile")
 
-modFileName1 = (
+mod_file_name1 = (
     "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-    + thisModName1
+    + this_mod_name1
 )
 shutil.copy2(
-    routeDeletedTransferFile, modFileName1
+    route_deleted_transfer_file, mod_file_name1
 )  # copy the transper file to the path of the scenario management's Modification folder
 
 
 ################################################
-### Fix the routes in the transfer file (routeAddedTransferFileStart)
-routeNodeClass = RouteNodes()  # read from routeAddedTransferFileStart
-errorNodeListClass = ErrorNodeList()
-errorNodeStopListClass = ErrorNodeStopList()
-routeNodeClass.read_route_file(
-    errorNodeListClass, errorNodeStopListClass
+### Fix the routes in the transfer file (route_added_transfer_file_start)
+route_node_class = RouteNodes()  # read from route_added_transfer_file_start
+error_node_list_class = ErrorNodeList()
+error_node_stop_list_class = error_node_stop_list()
+route_node_class.read_route_file(
+    error_node_list_class, error_node_stop_list_class
 )  # get the list of odes and the nestedlist of nodes and stops / WITH OPEN(routeTransferFileStartName), WHICH IS A TRANSFER FILE THAT ADDS THE PROBLEM ROUTES
-errorNodeStopList = errorNodeStopListClass.get_node_stop_list  # errorNodeStopList is a nested list
-numOfNodeStop = errorNodeStopListClass.get_nodes_stop_count()
-errorRouteListLong = errorNodeStopListClass.get_route()
-errorNodeList1 = errorNodeListClass.check_node1()
-errorRouteList = errorNodeListClass.error_route_id()
+error_node_stop_list = error_node_stop_list_class.get_node_stop_list  # error_node_stop_list is a nested list
+num_of_node_stop = error_node_stop_list_class.get_nodes_stop_count()
+error_route_list_long = error_node_stop_list_class.get_route()
+error_node_list1 = error_node_list_class.check_node1()
+error_route_list = error_node_list_class.error_route_id()
 
-numOfNodes = errorNodeListClass.error_num_nodes()
-print(f"Number of nodes along the route(s): {numOfNodes}")
+num_of_nodes = error_node_list_class.error_num_nodes()
+print(f"Number of nodes along the route(s): {num_of_nodes}")
 
 start_marker = "$LINK:NO"
 end_marker = "$LINKPOLY"
-with open(networkFileName, "r") as fp:
+with open(network_file_name, "r") as fp:
     lines = fp.readlines()
 in_between = False
 result_lines = []
@@ -646,27 +646,27 @@ for line in lines:
         result_lines.append(line)
     if end_marker in line:
         in_between = False  # Stop keeping lines
-with open(networkFileNameShort, "w") as output:
+with open(network_file_name_short, "w") as output:
     output.writelines(result_lines)
 
-countingNode = 0
-nodelinks = []
+counting_node = 0
+node_links = []
 
-# ! The pairs of nodes recognised through "for count in range(numOfNodes-1)" iretation are all successive nodes along the original route
-for count in range(numOfNodes - 1):
+# ! The pairs of nodes recognised through "for count in range(num_of_nodes-1)" iretation are all successive nodes along the original route
+for count in range(num_of_nodes - 1):
     # print("Checkng Count:", count)
-    check_node1 = errorNodeList1[count]
-    checkNode2 = errorNodeList1[count + 1]
-    checkRouteThisNode = errorRouteList[count]
-    checkRouteNextNode = errorRouteList[count + 1]
-    node12ok = node12okClass.get_error_nodes2(
+    check_node1 = error_node_list1[count]
+    check_node2 = error_node_list1[count + 1]
+    check_route_this_node = error_route_list[count]
+    check_route_of_next_node = error_route_list[count + 1]
+    node12ok = node12ok_class.get_error_nodes2(
         count,
         check_node1,
-        checkNode2,
-        checkRouteThisNode,
-        checkRouteNextNode,
-        errorNodesCheck,
-        errorNodesTypeCheck,
+        check_node2,
+        check_route_this_node,
+        check_route_of_next_node,
+        error_nodes_check,
+        error_nodes_type_check,
     )  # return 999 or 1 or the missing node that can be solved by Birendra's method
     """
     node12ok=1: node 1, 2 and the link, turn... from node1 to 2 are fine
@@ -675,25 +675,25 @@ for count in range(numOfNodes - 1):
     #node12ok=4: node 1, 2 exist, but Link close
     #node12ok=5: node 1, 2 and the link from 1 to 2 exist, but there are turn, lane, ... issues.
     """
-    nodelinks.append([check_node1, checkNode2, node12ok])
+    node_links.append([check_node1, check_node2, node12ok])
 
 ##### Problematic nodes read from the modification file (.tra)
-modificationCheck = ModificationCheckList()
-modificationCheck.set_links_to_check(errorModification)
-nodelinksReplace = modificationCheck.get_links_to_check()
-nodelinksReplace = [[str(x), str(y), z] for x, y, z in nodelinksReplace]
+modification_check = ModificationCheckList()
+modification_check.set_links_to_check(error_modification)
+node_links_replace = modification_check.get_links_to_check()
+node_links_replace = [[str(x), str(y), z] for x, y, z in node_links_replace]
 
-# Update nodelinks with replacements
-for replace in nodelinksReplace:
-    for link in nodelinks:
+# Update node_links with replacements
+for replace in node_links_replace:
+    for link in node_links:
         if replace[0] == link[0] and replace[1] == link[1]:
             link[2] = replace[2]
 
 # Create a new .ver for shortest path search (where problematic routes have been deleted)
 Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
-Visum2.LoadVersion(workingScenarioDeleteRoutesName)
-Visum2.ApplyModelTransferFile(errorModification)
-Visum2.IO.LoadNet(networkFileName, ReadAdditive=False)
+Visum2.LoadVersion(working_scenario_delete_routes_name)
+Visum2.ApplyModelTransferFile(error_modification)
+Visum2.IO.LoadNet(network_file_name, ReadAdditive=False)
 
 # Messages in the widget
 all_messages = ""
@@ -701,17 +701,17 @@ all_messages = ""
 # Initialise variables to track state
 n_found = False
 a_n = None
-searchChains = []  # the list of lists of nodes needing to be added to the route
+search_chains = []  # the list of lists of nodes needing to be added to the route
 
-for i in range(len(nodelinks)):
-    # route_i = checkRouteThisNode[i]
-    if nodelinks[i][2] != 1 and not n_found:
-        a_n = nodelinks[i][0]  # Capture the first column value as a_n
+for i in range(len(node_links)):
+    # route_i = check_route_this_node[i]
+    if node_links[i][2] != 1 and not n_found:
+        a_n = node_links[i][0]  # Capture the first column value as a_n
         n_found = True  # We found a_n, now we search for a_m
 
     # Now we search for the row where the third column equals 1
-    if nodelinks[i][2] == 1 and n_found:
-        a_m = nodelinks[i][0]  # Capture the first column value as a_m
+    if node_links[i][2] == 1 and n_found:
+        a_m = node_links[i][0]  # Capture the first column value as a_m
         # seachNode1n2.append((a_n, a_m))  # Append the tuple (a_n, a_m) to array1
         try:
             aNetElementContainer = Visum2.CreateNetElements()
@@ -725,39 +725,39 @@ for i in range(len(nodelinks)):
             )
             NodeChainPuT = Visum2.Analysis.RouteSearchPuTSys.NodeChainPuT
             NodeChain = Visum2.Analysis.RouteSearchPrT.NodeChainPrT
-            chain = [errorRouteList[i]]
+            chain = [error_route_list[i]]
             for n in range(len(NodeChain)):
                 chain.append(NodeChain[n].AttValue("NO"))
             # Visum2.Analysis.RouteSearchPuTSys.Clear()
-            if chain != [errorRouteList[i]]:  # the first item being the route
-                searchChains.append(chain)
+            if chain != [error_route_list[i]]:  # the first item being the route
+                search_chains.append(chain)
             # Reset n_found to continue the process
             Visum2.Analysis.RouteSearchPrT.Clear()
         except Exception:
-            message = f"Warning: Shortest Path is not found between {a_n} and {a_m} for Bus Route {checkRouteThisNode}"
+            message = f"Warning: Shortest Path is not found between {a_n} and {a_m} for Bus Route {check_route_this_node}"
             all_messages += message + "\n"
         n_found = False
 
-for sublist in searchChains:
+for sublist in search_chains:
     for i in range(1, len(sublist)):
         sublist[i] = int(sublist[i])
 
-if searchChains != []:
+if search_chains != []:
     all_messages += "Dear Modeller: the following routes have been rerouted through shortest path. Please review the routes and make necessary changes"
-for chain in searchChains:
+for chain in search_chains:
     message = f"Route {chain[0]}: please review the route between {chain[1]} and {chain[-1]}"
     print(message)
 
-nodesDeleteList = modificationCheck.get_nodes_to_delete()
-if searchChains:
+nodes_delete_list = modification_check.get_nodes_to_delete()
+if search_chains:
     shutil.copy2(
-        routeAddedTransferFileStart, routeTransferFileTempName
+        route_added_transfer_file_start, route_transfer_file_temp_name
     )  # to keep the start file unchanged
-    fixBusRouteClass.fix_routes(
-        nodesDeleteList, searchChains, routeTransferFileTempName, routeAddedTransferFileFinal
+    fix_bus_route_class.fix_routes(
+        nodes_delete_list, search_chains, route_transfer_file_temp_name, route_added_transfer_file_final
     )
 Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
-Visum3.LoadVersion(workingScenarioDeleteRoutesName)
+Visum3.LoadVersion(working_scenario_delete_routes_name)
 # create AddNetRead-Object and specify desired conflict avoiding method
 anrController = Visum3.IO.CreateAddNetReadController()
 anrController.SetWhatToDo("Line", C.AddNetRead_OverWrite)
@@ -775,12 +775,12 @@ anrController.SetWhatToDo("Operator", C.AddNetRead_OverWrite)
 
 anrController.SetConflictAvoidingForAll(10000, "ORG_")
 # apply a model transfer
-Visum3.ApplyModelTransferFile(errorModification, anrController)
-Visum3.SaveVersion(workingScenarioLoadErrorMod)
+Visum3.ApplyModelTransferFile(error_modification, anrController)
+Visum3.SaveVersion(working_scenario_load_error_mod)
 Visum3.GenerateModelTransferFileBetweenVersionFiles(
-    workingScenarioDeleteRoutesName,
-    workingScenarioLoadErrorMod,
-    errorModTransferFile,
+    working_scenario_delete_routes_name,
+    working_scenario_load_error_mod,
+    error_mod_transfer_file,
     LayoutFile="",
     NonDefaultOnly=False,
     NonEmptyTablesOnly=True,
@@ -788,12 +788,12 @@ Visum3.GenerateModelTransferFileBetweenVersionFiles(
 )
 
 
-Visum3.ApplyModelTransferFile(routeAddedTransferFileFinal, anrController)
-Visum3.SaveVersion(workingScenarioRoutesFixedName)
+Visum3.ApplyModelTransferFile(route_added_transfer_file_final, anrController)
+Visum3.SaveVersion(working_scenario_routes_fixed_name)
 Visum3.GenerateModelTransferFileBetweenVersionFiles(
-    workingScenarioLoadErrorMod,
-    workingScenarioRoutesFixedName,
-    routesFixedTransferFile,
+    working_scenario_load_error_mod,
+    working_scenario_routes_fixed_name,
+    routes_fixed_transfer_file,
     LayoutFile="",
     NonDefaultOnly=False,
     NonEmptyTablesOnly=True,
@@ -802,50 +802,50 @@ Visum3.GenerateModelTransferFileBetweenVersionFiles(
 
 
 ### copying final transfer files to mod files
-# new errorModification
-newModification = thisProject.AddModification()
-newModification.SetAttValue("Code", "Refined Problematic Modification")
-newModification.SetAttValue(
+# new error_modification
+new_modification = this_project.AddModification()
+new_modification.SetAttValue("Code", "Refined Problematic Modification")
+new_modification.SetAttValue(
     "Description",
     "Copied from the modification with error, with the erroreous modiffication reloaded using conflict avoiding parameters",
 )
-newModNo2 = int(newModification.AttValue("No"))
-thisModName2 = newModification.AttValue("TraFile")
-modFileName2 = (
+new_mod_no2 = int(new_modification.AttValue("No"))
+this_mod_name2 = new_modification.AttValue("TraFile")
+mod_file_name2 = (
     "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-    + thisModName2
+    + this_mod_name2
 )
-shutil.copy2(errorModTransferFile, modFileName2)  # to keep the start file unchanged
+shutil.copy2(error_mod_transfer_file, mod_file_name2)  # to keep the start file unchanged
 
 # add the fixed routes
-newModification = thisProject.AddModification()
-newModification.SetAttValue("Code", "Problematic Routes Re-added")
-newModification.SetAttValue("Description", "Have the deleted problematic routes added")
-newModNo3 = int(newModification.AttValue("No"))
-thisModName3 = newModification.AttValue("TraFile")
+new_modification = this_project.AddModification()
+new_modification.SetAttValue("Code", "Problematic Routes Re-added")
+new_modification.SetAttValue("Description", "Have the deleted problematic routes added")
+new_mod_no3 = int(new_modification.AttValue("No"))
+this_mod_name3 = new_modification.AttValue("TraFile")
 
-modFileName3 = (
+mod_file_name3 = (
     "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-    + thisModName3
+    + this_mod_name3
 )
-shutil.copy2(routeAddedTransferFileFinal, modFileName3)  # to keep the start file unchanged
+shutil.copy2(route_added_transfer_file_final, mod_file_name3)  # to keep the start file unchanged
 
 ###### apply the Modification with error
 
-oldModSet = errorScenario.AttValue("MODIFICATIONS")
-print(oldModSet)
-newModSet = oldModSet[:-1] + str(newModNo1) + "," + str(newModNo2) + "," + str(newModNo3)
+old_mod_set = error_scenario.AttValue("MODIFICATIONS")
+print(old_mod_set)
+new_mod_set = old_mod_set[:-1] + str(new_mod_no1) + "," + str(new_mod_no2) + "," + str(new_mod_no3)
 #
-print(newModSet)
-# curScenario=thisProject.Scenarios.ItemByKey(8)
-curScenario = thisProject.AddScenario()
+print(new_mod_set)
+# curScenario=this_project.Scenarios.ItemByKey(8)
+curScenario = this_project.AddScenario()
 curScenarioNumber = curScenario.AttValue("NO")
 curScenario.SetAttValue("CODE", "BusRouteFixed")
 curScenario.SetAttValue("PARAMETERSET", "1")
 # curScenario.SetAttValue("MODIFICATIONS","1,2,3,5,7,11")##11 should be from new mod file and others from user input scenario
-curScenario.SetAttValue("MODIFICATIONS", newModSet)
-# errorMessageFile=errorMessageDir+str(errorScenarioId)+".txt"
-errorMessageFile1 = errorMessageDir + str(curScenarioNumber) + ".txt"  # new error file
+curScenario.SetAttValue("MODIFICATIONS", new_mod_set)
+# error_message_file=error_message_dir+str(error_scenario_id)+".txt"
+errorMessageFile1 = error_message_dir + str(curScenarioNumber) + ".txt"  # new error file
 Visum.SetErrorFile(errorMessageFile1)  # writing error message on a defined file
 curScenario.LoadInput()
 

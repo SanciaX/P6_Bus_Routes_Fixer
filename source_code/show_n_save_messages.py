@@ -1,3 +1,5 @@
+import tkinter as tk
+from tkinter import ttk
 def show_n_save_messages(all_messages):
     # Create the main window
     root = tk.Tk()

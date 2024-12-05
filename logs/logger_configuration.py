@@ -5,8 +5,8 @@ import logging
 
 from user_inputs import *
 
-debug_log_path = busRoutesFixPath+ r"\debug.log"
-derived_data_log_path = busRoutesFixPath+r"\Notes_for_Visum_Modeller.log"
+debug_log_path = bus_routes_fix_path+ r"\debug.log"
+derived_data_log_path = bus_routes_fix_path+r"\Notes_for_Visum_Modeller.log"
 
 # Configure logger for debugging messages
 debug_logger = logging.getLogger("debug_logger")

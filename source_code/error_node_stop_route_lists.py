@@ -2,15 +2,15 @@
 Read the list of Nodes and Stops along the problematic route(s)
 in case stops may be needed in future version
 """
-class ErrorNodeStopList:
+class error_node_stop_list:
     def __init__(self):
         self.get_node_stop_list = [[0, 0] for _ in range(10000)]
-        self.routeName2 = [0] * 10000
+        self.route_name2 = [0] * 10000
         self.counter = 0
 
     def get_node_stop(self, counter, node_stop, this_route):
         self.get_node_stop_list[counter] = node_stop
-        self.routeName2[counter] = this_route
+        self.route_name2[counter] = this_route
         self.counter = counter
 
     def get_nodes_stop_count(self):
@@ -23,7 +23,7 @@ class ErrorNodeStopList:
         return self.get_node_stop_list[self.counter][1]
 
     def get_route(self):
-        return self.routeName2
+        return self.route_name2
 
 """Read the list of nodes along the problematic route(s)"""
 class ErrorNodeList:
@@ -43,45 +43,45 @@ class ErrorNodeList:
         return self.node1
 
     def error_num_nodes(self):
-        return self.counter  # numOfNodes
+        return self.counter  # num_of_nodes
 
     def error_route_id(self):
         return self.currentRoute
 
 
 """ the list of error routes"""
-class ErrorRouteList:
+class error_route_list:
     def __init__(self):
-        self.routeNum = [0] * 100
-        self.routeDir = [0] * 100
-        self.routeDirection = [0] * 100
-        self.routeNameCheck = 0
+        self.route_num = [0] * 100
+        self.route_dir = [0] * 100
+        self.route_direction = [0] * 100
+        self.route_name_check = 0
         self.counting1 = 0
         self.counting2 = 0
 
     def get_error_route(self, counter_route, route_num, route_dir, route_direction):
         if counter_route == 0:
             self.counting1 = 0
-            self.routeNum[self.counting1] = route_num
-            self.routeDir[self.counting1] = route_dir
-            self.routeDirection[self.counting1] = route_direction
-            self.routeNameCheck = route_num + route_direction
+            self.route_num[self.counting1] = route_num
+            self.route_dir[self.counting1] = route_dir
+            self.route_direction[self.counting1] = route_direction
+            self.route_name_check = route_num + route_direction
 
-        if self.routeNameCheck != route_num + route_direction:
+        if self.route_name_check != route_num + route_direction:
             self.counting1 += 1
-            self.routeNum[self.counting1] = route_num
-            self.routeDir[self.counting1] = route_dir
-            self.routeDirection[self.counting1] = route_direction
-            self.routeNameCheck = route_num + route_direction
+            self.route_num[self.counting1] = route_num
+            self.route_dir[self.counting1] = route_dir
+            self.route_direction[self.counting1] = route_direction
+            self.route_name_check = route_num + route_direction
 
     def error_route(self):
-        return self.routeNum
+        return self.route_num
 
     def error_dir(self):
-        return self.routeDir
+        return self.route_dir
 
     def error_direction(self):
-        return self.routeDirection
+        return self.route_direction
 
     #def error_line_direction(self):
         #return self.lineDirection

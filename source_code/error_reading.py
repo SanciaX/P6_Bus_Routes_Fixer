@@ -4,54 +4,54 @@ Read error message and the modification causing errors
 
 class ErrorNodes:
     def __init__(self, error_message_file):
-        self.errorMessageFile = error_message_file
+        self.error_message_file = error_message_file
         self.word = "Warning Line route"
         self.word1 = "Error Line route"
-        self.wordTurn = ": Turn"
-        self.wordTurnBlock = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
+        self.word_turn = ": Turn"
+        self.word_turn_block = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
         # link close error
-        self.wordLink1 = "link"
-        self.wordLink2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
-        self.wordNoLinkProvide = "Error No link provided between node"
-        self.wordNoLineRouteItemN = "Error No line route item was found at node"
-        self.wordNoLineRouteItemS = "Error No line route item was found at stop point"
-        self.wordMojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
+        self.word_link1 = "link"
+        self.word_link2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
+        self.word_no_link_provide = "Error No link provided between node"
+        self.word_no_line_route_item_node = "Error No line route item was found at node"
+        self.word_no_line_route_item_stop = "Error No line route item was found at stop point"
+        self.word_mojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
 
 
     def read_error_file(self, error_route_list_class, node_check_list_class):
         """
-        :param error_route_list_class: =ErrorRouteList(),
+        :param error_route_list_class: =error_route_list(),
         will call errorRouteList_Class.get_error_route(
                     counter1, bus_route_number, bus_route_dir, direction)
         :param node_check_list_class:  =NodeCheckList()
-        will call nodeCheckList_Class.get_node_checkList(node_t1, node_t2, errorType)
+        will call node_check_list_class.get_node_checklist(node_t1, node_t2, error_type)
         :return:
         """
-        with open(self.errorMessageFile, "r") as fp:
+        with open(self.error_message_file, "r") as fp:
             lines = fp.readlines()
 
         counter1 = 0
         for line in lines:
             line = line.strip()
-            if all(word in line for word in [self.word1, self.wordTurn, self.wordTurnBlock]):
+            if all(word in line for word in [self.word1, self.word_turn, self.word_turn_block]):
                 parts = line.split("->")
                 node_t1 = parts[1][:8]
                 node_t2 = parts[2][:8]
-                node_check_list_class.get_node_checkList(node_t1, node_t2, "Turn block")
+                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block")
 
-            if all(word in line for word in [self.wordLink1, self.wordLink2]):
+            if all(word in line for word in [self.word_link1, self.word_link2]):
                 num_node_pair = line.count("(")
                 for i in range(num_node_pair):
                     node_t1 = line.split('(')[1][0:8]
                     node_t2 = line.split('>')[1][0:8]
-                    node_check_list_class.get_node_checkList(node_t1, node_t2, "Link Close")
+                    node_check_list_class.get_node_checklist(node_t1, node_t2, "Link Close")
                     line = line.split(')')[1]
 
-            if self.wordNoLinkProvide in line:
+            if self.word_no_link_provide in line:
                 parts = line.split("node")
                 node_t1 = parts[1][1:9]
                 node_t2 = parts[2][1:9]
-                node_check_list_class.get_node_checkList(node_t1, node_t2, "No Link")
+                node_check_list_class.get_node_checklist(node_t1, node_t2, "No Link")
 
             if self.word in line or self.word1 in line:
                 start_index = line.find(';') + 1
@@ -73,7 +73,7 @@ class ErrorNodes:
                 counter1 += 1
 
 
-"""Recognise potential errors in the modification causing errors """
+"""Recognise potential errors from the modification causing errors """
 class ModificationCheckList:
     def __init__(self):
         self.links_to_check = []
@@ -103,7 +103,7 @@ class ModificationCheckList:
                             n2, n3 = int(parts[1]), int(parts[2])
                             if any(
                                     error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
-                                    #errorNodeList1 is defined as errorNodeListClass.check_node1() in the main script
+                                    #error_node_list1 is defined as error_node_list_class.check_node1() in the main script
                                     for i in range(len(error_node_list1) - 1)
                             ):
                                 list0.append([n2, n3, 5])
