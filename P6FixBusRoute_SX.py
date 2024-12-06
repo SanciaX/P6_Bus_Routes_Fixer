@@ -258,7 +258,7 @@ class RouteNodes:
     def __init__(self):
         self.routeNumber = 0
 
-    def ReadRouteFile(self,errorNodeList_Class,NodeStopArray_Class):
+    def ReadRouteFile(self,error_node_list_Class,NodeStopArray_Class):
         with open(route_added_transfer_file_start, 'r') as fp:
             lines = fp.readlines()
             counter1=-1 
@@ -286,7 +286,7 @@ class RouteNodes:
                             counter1+=1
                         lastRoute = currentRoute
                     if nodeNumber != 99:
-                        errorNodeList_Class.getErrorNodes(counter1,nodeNumber,currentRoute) #giving counter and node1 to the errorNodeList_Class
+                        error_node_list_Class.getErrorNodes(counter1,nodeNumber,currentRoute) #giving counter and node1 to the error_node_list_Class
                 if line.find(word3) != -1:
                     startLineIndex=1
           
@@ -345,7 +345,7 @@ class ErrorNodeList:
 
 ########################################################  
 ## Section 2.6: the list of error routes
-class error_route_list:
+class ErrorRouteList:
     def __init__(self):
         self.route_num=[0]*100
         self.route_dir=[0]*100 
@@ -508,7 +508,7 @@ Visum.SetErrorFile(error_message_log)#writing error message on a defined file
 ## Section 3.2: Define objectives through Classes
 error_node_class=ErrorNodes() # read error message
 node_check_list_class=NodeCheckList()
-error_route_list_class=error_route_list() # the list of error routes
+error_route_list_class=ErrorRouteList() # the list of error routes
 error_node_class.ReadErrorFile(error_route_list_class,node_check_list_class) # GET ERROR ROUTE: call error_route_list_class.getErrorRoute method, in which calls errorRouteList_Class.getErrorRoute(counter1,busRouteNumber,busRouteDir,direction)
 error_route_list=error_route_list_class.error_route() #Return route_num 
 error_dir_list=error_route_list_class.error_dir()

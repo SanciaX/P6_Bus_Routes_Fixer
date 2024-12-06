@@ -1,6 +1,6 @@
 import win32com.client
 
-def copy_files_from_scenario_management(
+def copy_files_from_scenario_management(Visum,
         this_project, error_scenario_id, error_message_dir,
         working_scenario_name, network_file_name, error_message_log
 ):
@@ -8,7 +8,7 @@ def copy_files_from_scenario_management(
     # Create a new scenario containing the modifications before the error occurs and save the .ver file
     error_scenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(error_scenario_id)
     old_mod_set = error_scenario.AttValue("MODIFICATIONS")
-    working_mod_set = old_mod_set[:-1]
+    working_mod_set = old_mod_set[:-2]
 
     working_scenario = this_project.AddScenario()
     working_scenario_id = working_scenario.AttValue("NO")
@@ -31,5 +31,4 @@ def copy_files_from_scenario_management(
         NonEmptyTablesOnly=True,
     )
     Visum.SetErrorFile(error_message_log)
-    return (
-    error_scenario, old_mod_set, working_mod_set, working_scenario, working_scenario_id, error_message_file_working)
+    return old_mod_set, error_message_file_working

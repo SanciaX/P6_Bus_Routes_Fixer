@@ -1,19 +1,31 @@
+import os
 import json
 from pathlib import Path
 
+# Get the current working directory
+current_path = Path(os.getcwd())
+print(f"The current working directory is: {current_path}")
+
+# Construct the path to the directories.json file
+json_file_path = current_path /'config' / 'directories.json'
+print(f"The JSON file path is: {json_file_path}")
+
 # Load the JSON file
-with open('directories.json', 'r') as file:
+print(f"Does the JSON file exist? {json_file_path.exists()}")
+with open(json_file_path, 'r') as file:
     directories = json.load(file)
 
+print(directories)
+
 # Define base paths
-bus_routes_fix_path = Path(directories['base_path'])
+bus_routes_fix_path = current_path / directories['base_path']
 scenario_management_path = Path(directories['scenario_management_path'])
 modifications_path = scenario_management_path / directories['modifications_path']
 scenarios_path = scenario_management_path / directories['scenarios_path']
 
 # Define IDs
 error_scenario_id = directories['error_scenario_id']
-working_scenario_id = directories['working_scenario_id']
+# working_scenario_id = directories['working_scenario_id']
 error_modification_id = directories['error_modification_id']
 
 # Define files using relative paths

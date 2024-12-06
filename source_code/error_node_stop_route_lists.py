@@ -2,7 +2,7 @@
 Read the list of Nodes and Stops along the problematic route(s)
 in case stops may be needed in future version
 """
-class error_node_stop_list:
+class ErrorNodeStopList:
     def __init__(self):
         self.get_node_stop_list = [[0, 0] for _ in range(10000)]
         self.route_name2 = [0] * 10000
@@ -50,7 +50,7 @@ class ErrorNodeList:
 
 
 """ the list of error routes"""
-class error_route_list:
+class ErrorRouteList:
     def __init__(self):
         self.route_num = [0] * 100
         self.route_dir = [0] * 100

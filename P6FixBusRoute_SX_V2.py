@@ -275,7 +275,7 @@ class RouteNodes:
     def __init__(self):
         self.routeNumber = 0
 
-    def read_route_file(self, errorNodeList_Class, NodeStopList_Class):
+    def read_route_file(self, error_node_list_Class, NodeStopList_Class):
         with open(route_added_transfer_file_start, "r") as fp:
             lines = fp.readlines()
             startLineIndex = False
@@ -296,14 +296,14 @@ class RouteNodes:
                         currentRoute = line.split(";")[1]
                         if nodeNum.isdigit() and currentRoute == lastRoute:
                             counter1 += 1
-                            errorNodeList_Class.get_error_nodes(counter1, nodeNum, currentRoute)
+                            error_node_list_Class.get_error_nodes(counter1, nodeNum, currentRoute)
                         lastRoute = currentRoute
                 if word3 in line:
                     startLineIndex = True
 
 ########################################################
 ## Section 2.4: Read the list of Nodes and Stops along the problematic route(s)
-class error_node_stop_list:
+class ErrorNodeStopList:
     def __init__(self):
         self.get_node_stop_list = [[0, 0] for _ in range(10000)]
         self.route_name2 = [0] * 10000
@@ -352,7 +352,7 @@ class ErrorNodeList:
 
 ########################################################
 ## Section 2.6: the list of error routes
-class error_route_list:
+class ErrorRouteList:
     def __init__(self):
         self.route_num = [0] * 100
         self.route_dir = [0] * 100
@@ -525,7 +525,7 @@ Visum.SetErrorFile(error_message_log)  # writing error message on a defined file
 ## Section 3.2: Define objectives through Classes
 error_node_class = ErrorNodes()  # read error message
 node_check_list_class = NodeCheckList()
-error_route_list_class = error_route_list()  # the list of error routes
+error_route_list_class = ErrorRouteList()  # the list of error routes
 error_node_class.read_error_file(
     error_route_list_class, node_check_list_class
 )  # GET ERROR ROUTE: call error_route_list_class.get_error_route method, in which calls errorRouteList_Class.get_error_route(counter1,busRouteNumber,busRouteDir,direction)
@@ -620,7 +620,7 @@ shutil.copy2(
 ### Fix the routes in the transfer file (route_added_transfer_file_start)
 route_node_class = RouteNodes()  # read from route_added_transfer_file_start
 error_node_list_class = ErrorNodeList()
-error_node_stop_list_class = error_node_stop_list()
+error_node_stop_list_class = ErrorNodeStopList()
 route_node_class.read_route_file(
     error_node_list_class, error_node_stop_list_class
 )  # get the list of odes and the nestedlist of nodes and stops / WITH OPEN(routeTransferFileStartName), WHICH IS A TRANSFER FILE THAT ADDS THE PROBLEM ROUTES

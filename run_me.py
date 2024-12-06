@@ -9,7 +9,7 @@ Instructions:
 
 """
 
-#import logging
+import logging
 import shutil
 #import tkinter as tk
 #from tkinter import ttk
@@ -22,66 +22,28 @@ from config.read_json import *
 from source_code.node_checklist import NodeCheckList
 from source_code.error_reading import ErrorNodes, ModificationCheckList
 from source_code.route_nodes import RouteNodes
-from source_code.error_node_stop_route_lists import error_node_stop_list, ErrorNodeList, error_route_list
+from source_code.error_node_stop_route_lists import ErrorNodeStopList, ErrorNodeList, ErrorRouteList
 from source_code.check_node12_ok import CheckNode12ok
 from source_code.fix_bus_route import FixBusRoute
 from logs.logger_configuration import *
 from source_code.show_n_save_messages import show_n_save_messages
 
-###### PREPARATIONS: READ/COPY FILES FROM SCENARIO MANAGEMENT AND DEFINE CLASSES
-# Initialise PTV COM object
-Visum = win32com.client.gencache.EnsureDispatch("Visum.Visum.24")
-# Visum = win32com.client.Dispatch("Visum.Visum.24")
+###### PREPARATIONS:
+## Save .tra, .net, .ver files from Scenario Management
+Visum = win32com.client.gencache.EnsureDispatch("Visum.Visum.25") # Visum = win32com.client.Dispatch("Visum.Visum.25")
 logging.info(f"PTV Visum started: {Visum}")
-
-# Load Scenario Management
 C = win32com.client.constants
 this_project = Visum.ScenarioManagement.OpenProject(scenario_management_file)
-workingScenarioVersion = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(working_scenario_id)  # scenario with correct network
-workingScenarioVersion.LoadInput()  # load the network of the last  working scenario
-Visum.SaveVersion(working_scenario_name)  # save version file
-
-# Load the *.net file with error
-error_scenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(error_scenario_id)
-error_scenario.LoadInput()  # Loads the input version files (base version and all modifications) for this scenario
-Visum.IO.SaveNet(
-    network_file_name,
-    LayoutFile="",
-    EditableOnly=True,
-    NonDefaultOnly=True,
-    ActiveNetElemsOnly=False,
-    NonEmptyTablesOnly=True,
+from source_code.copy_files_from_scenario_management import copy_files_from_scenario_management
+(old_mod_set, error_message_file_working) = copy_files_from_scenario_management(
+    Visum, this_project, error_scenario_id, error_message_dir,
+    working_scenario_name, network_file_name, error_message_log
 )
-Visum.SetErrorFile(error_message_log)  # set error log
 
-# Initialise classes and load error data
-error_node_class = ErrorNodes(error_message_file)  # read error message
-node_check_list_class = NodeCheckList()
-error_route_list_class = error_route_list()  # the list of error routes
+from source_code.define_classes import initialize_classes
 
-# Read error file and process routes
-error_node_class.read_error_file(error_route_list_class, node_check_list_class)  # get error route: call error_route_list_class.get_error_route method, in which calls errorRouteList_Class.get_error_route(counter1,busRouteNumber,busRouteDir,direction)
-error_route_list = error_route_list_class.error_route()  # Return route_num
-error_dir_list = error_route_list_class.error_dir()
-error_direction_list = error_route_list_class.error_direction()
-error_nodes_checklist = node_check_list_class.get_check_node1()  # list of all the nodes to check
-error_nodes_checklist2 = node_check_list_class.get_check_node2()
-error_node_type_checklist = node_check_list_class.get_error_type()  # list of
-error_nodes_check = [
-    (error_nodes_checklist[i], error_nodes_checklist2[i]) for i in range(len(error_nodes_checklist))
-]
-error_nodes_type_check = [
-    (error_nodes_checklist[i], error_nodes_checklist2[i], error_node_type_checklist[i])
-    for i in range(len(error_nodes_checklist))
-]
-print(f"Nodes to check and error types: {error_nodes_type_check}")
-
-node12ok_class = CheckNode12ok(network_file_name_short)
-fix_bus_route_class = FixBusRoute()
-
-num_of_routes = error_route_list_class.error_route_count()
-error_route = error_route_list[1]
-print(f"Number of Routes: {num_of_routes}")
+# Initialize classes and load error data
+(error_dir_list, error_direction_list, error_nodes_check, error_route, error_node_class, node_check_list_class, error_route_list_class, node12ok_class, fix_bus_route_class, num_of_routes, error_route_list, error_nodes_type_check) = initialize_classes(error_message_file, network_file_name_short)
 
 ###### FIX ROUTE ERRORS
 
@@ -145,7 +107,7 @@ shutil.copy2(
 ###### Fix the routes in the transfer file (route_added_transfer_file_start)
 route_node_class = RouteNodes(route_added_transfer_file_start)  # read from route_added_transfer_file_start
 error_node_list_class = ErrorNodeList()
-error_node_stop_list_class = error_node_stop_list()
+error_node_stop_list_class = ErrorNodeStopList()
 route_node_class.read_route_file(
     error_node_list_class, error_node_stop_list_class
 )  # get the list of odes and the nestedlist of nodes and stops / WITH OPEN(routeTransferFileStartName), WHICH IS A TRANSFER FILE THAT ADDS THE PROBLEM ROUTES
@@ -215,7 +177,7 @@ for replace in node_links_replace:
             link[2] = replace[2]
 
 # Create a new .ver for shortest path search (where problematic routes have been deleted)
-Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
+Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
 Visum2.LoadVersion(working_scenario_delete_routes_name)
 Visum2.ApplyModelTransferFile(error_modification)
 Visum2.IO.LoadNet(network_file_name, ReadAdditive=False)
@@ -281,7 +243,7 @@ if search_chains:
     fix_bus_route_class.fix_routes(
         nodes_delete_list, search_chains, route_transfer_file_temp_name, route_added_transfer_file_final
     )
-Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum")
+Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
 Visum3.LoadVersion(working_scenario_delete_routes_name)
 # create AddNetRead-Object and specify desired conflict avoiding method
 anrController = Visum3.IO.CreateAddNetReadController()
@@ -355,21 +317,21 @@ shutil.copy2(route_added_transfer_file_final, mod_file_name3)  # to keep the sta
 
 ###### apply the Modification with error
 
-old_mod_set = error_scenario.AttValue("MODIFICATIONS")
-print(old_mod_set)
+#old_mod_set = error_scenario.AttValue("MODIFICATIONS")
+#print(old_mod_set)
 new_mod_set = old_mod_set[:-1] + str(new_mod_no1) + "," + str(new_mod_no2) + "," + str(new_mod_no3)
 #
 print(new_mod_set)
 # curScenario=this_project.Scenarios.ItemByKey(8)
 curScenario = this_project.AddScenario()
-curScenarioNumber = curScenario.AttValue("NO")
+curScenarioId = curScenario.AttValue("NO")
 curScenario.SetAttValue("CODE", "BusRouteFixed")
 curScenario.SetAttValue("PARAMETERSET", "1")
 # curScenario.SetAttValue("MODIFICATIONS","1,2,3,5,7,11")##11 should be from new mod file and others from user input scenario
 curScenario.SetAttValue("MODIFICATIONS", new_mod_set)
 # error_message_file=error_message_dir+str(error_scenario_id)+".txt"
-errorMessageFile1 = error_message_dir + str(curScenarioNumber) + ".txt"  # new error file
-Visum.SetErrorFile(errorMessageFile1)  # writing error message on a defined file
+errorMessageFileFixed = error_message_dir + str(curScenarioId) + ".txt"  # new error file
+Visum.SetErrorFile(errorMessageFileFixed)  # writing error message on a defined file
 curScenario.LoadInput()
 
 

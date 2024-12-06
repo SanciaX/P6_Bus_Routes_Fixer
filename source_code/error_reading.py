@@ -20,7 +20,7 @@ class ErrorNodes:
 
     def read_error_file(self, error_route_list_class, node_check_list_class):
         """
-        :param error_route_list_class: =error_route_list(),
+        :param error_route_list_class: =ErrorRouteList(),
         will call errorRouteList_Class.get_error_route(
                     counter1, bus_route_number, bus_route_dir, direction)
         :param node_check_list_class:  =NodeCheckList()
