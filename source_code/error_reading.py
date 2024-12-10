@@ -5,17 +5,17 @@ Read error message and the modification causing errors
 class ErrorNodes:
     def __init__(self, error_message_file):
         self.error_message_file = error_message_file
-        self.word = "Warning Line route"
+        #self.word = "Warning Line route"
         self.word1 = "Error Line route"
         self.word_turn = ": Turn"
         self.word_turn_block = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
         # link close error
         self.word_link1 = "link"
-        self.word_link2 = " closed for the transport system B" # e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
+        self.word_link_close = "closed for the transport system B" # INCLUDE BOTH ONE LINK ERROR AND MULTIPLE ERRORS e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
         self.word_no_link_provide = "Error No link provided between node"
         self.word_no_line_route_item_node = "Error No line route item was found at node"
         self.word_no_line_route_item_stop = "Error No line route item was found at stop point"
-        self.word_mojibake = "Error Line route 1;1 EB;>: FORMATTING ERROR in: %1$l turns are closed for the transport system %2$s. Affected turns: %3$s"
+        self.word_mojibake = "turns are closed for the transport system"
 
 
     def read_error_file(self, error_route_list_class, node_check_list_class):
@@ -39,13 +39,12 @@ class ErrorNodes:
                 node_t2 = parts[2][:8]
                 node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block")
 
-            if all(word in line for word in [self.word_link1, self.word_link2]):
+            if all(word in line for word in [self.word_link1, self.word_link_close]):
                 num_node_pair = line.count("(")
                 for i in range(num_node_pair):
-                    node_t1 = line.split('(')[1][0:8]
-                    node_t2 = line.split('>')[1][0:8]
+                    node_t1 = line.split('(')[i+1][0:8]
+                    node_t2 = line.split('->')[i+1][0:8]
                     node_check_list_class.get_node_checklist(node_t1, node_t2, "Link Close")
-                    line = line.split(')')[1]
 
             if self.word_no_link_provide in line:
                 parts = line.split("node")
@@ -53,24 +52,26 @@ class ErrorNodes:
                 node_t2 = parts[2][1:9]
                 node_check_list_class.get_node_checklist(node_t1, node_t2, "No Link")
 
-            if self.word in line or self.word1 in line:
+            # if self.word in line or self.word1 in line:
+            if self.word1 in line:
                 start_index = line.find(';') + 1
                 blank_string = " "
                 space_index = 0
                 semi_colon_index = 0
-                for i in range(len(line)):
-                    j = line.find(blank_string, start_index)
-                    if j != -1:
-                        space_index = j
-
-                    k = line.find(";", start_index)
-                    if k != -1:
-                        semi_colon_index = k
+                #for i in range(len(line)):
+                j = line.find(blank_string, start_index) #string.find(value, start, end)
+                if j != -1:
+                    space_index = j
+                k = line.find(";", start_index)
+                if k != -1:
+                    semi_colon_index = k
                 bus_route_number = line[start_index:space_index]
                 bus_route_dir = line[space_index + 1:space_index + 1 + 2]
                 direction = line[semi_colon_index + 1:semi_colon_index + 2]
                 error_route_list_class.get_error_route(counter1, bus_route_number, bus_route_dir, direction)
                 counter1 += 1
+                #THE ABOVE CODES CAN BE SHORTENED...
+            #if self.word_mojibake in line:
 
 
 """Recognise potential errors from the modification causing errors """

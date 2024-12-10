@@ -23,10 +23,10 @@ class NodeCheckList:
         self.anode2 = self.anode2.append(node2)
         self.error_type = self.error_type.append(error_type)
 
-    def get_check_node1(self):
+    def check_node1(self):
         return self.anode1
 
-    def get_check_node2(self):
+    def check_node2(self):
         return self.anode2
 
     def get_error_type(self):

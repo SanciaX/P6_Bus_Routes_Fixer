@@ -60,19 +60,26 @@ class ErrorRouteList:
         self.counting2 = 0
 
     def get_error_route(self, counter_route, route_num, route_dir, route_direction):
-        if counter_route == 0:
+        route_name = route_num + route_direction
+        if counter_route == 0: # the 1st or the only problematic route
             self.counting1 = 0
-            self.route_num[self.counting1] = route_num
+            self.route_num[self.counting1] = route_num # i.e. self.route_num[0] = bus_route_number =  line[start_index:space_index]
             self.route_dir[self.counting1] = route_dir
             self.route_direction[self.counting1] = route_direction
-            self.route_name_check = route_num + route_direction
+            self.route_name_check = route_name
 
-        if self.route_name_check != route_num + route_direction:
+        if self.route_name_check != route_num + route_direction: # when it comes to a new problematic route: self.route_name_check indexes the last (route_num + route_direction)
             self.counting1 += 1
             self.route_num[self.counting1] = route_num
             self.route_dir[self.counting1] = route_dir
             self.route_direction[self.counting1] = route_direction
-            self.route_name_check = route_num + route_direction
+            self.route_name_check = route_name
+        else:
+            self.route_num[self.counting1] = route_num # i.e. self.route_num[i] = bus_route_number =  line[start_index:space_index]
+            self.route_dir[self.counting1] = route_dir
+            self.route_direction[self.counting1] = route_direction
+            self.route_name_check = route_name
+
 
     def error_route(self):
         return self.route_num
