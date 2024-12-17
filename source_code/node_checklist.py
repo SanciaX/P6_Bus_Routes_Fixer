@@ -1,13 +1,14 @@
 """
 Get the lists of Node1, Node2 on the problematic bus routes between which
 the link/turn may be problematic
-
+Note that on the lists there are nodes along all the problematic bus routes, not always only one.
 """
 class NodeCheckList:
     my_class_var_1 = "1"
     def __init__(self):
         self.anode1 = []
         self.anode2 = []
+        self.anode12_pair = []
         self.routeName = []
         self.error_type = []
 
@@ -19,9 +20,12 @@ class NodeCheckList:
          error_type is identified in Class ErrorNodes
         :return: error_type
         """
-        self.anode1 = self.anode1.append(node1)
-        self.anode2 = self.anode2.append(node2)
-        self.error_type = self.error_type.append(error_type)
+
+        if [node1, node2] not in  self.anode12_pair:
+            self.anode1.append(node1)
+            self.anode2.append(node2)
+            self.anode12_pair.append([node1, node2])
+            self.error_type.append(error_type)
 
     def check_node1(self):
         return self.anode1

@@ -31,11 +31,11 @@ error_modification_id = directories['error_modification_id']
 # Define files using relative paths
 scenario_management_file = scenario_management_path / 'SM_TESTING.vpdbx'
 error_modification_list = list(str(modifications_path / 'M000000.tra'))
-error_modification_list[-len(str(error_modification_id)) - 4] = str(error_modification_id) # error_modification_id can have 1,.2, 3,... digital
+error_modification_list[-len(str(error_modification_id))-4 :-4] = str(error_modification_id) # error_modification_id can have 1,.2, 3,... digital
 error_modification = ''.join(error_modification_list)
 
-error_message_dir = scenarios_path / 'S000008'
-error_message_file = error_message_dir / 'Messages.txt'
+error_message_path = scenarios_path / 'S000013'
+error_message_file = error_message_path / 'Messages.txt'
 error_message_log = bus_routes_fix_path / 'MessageLog.txt'
 
 working_scenario_name = bus_routes_fix_path / 'scenarioWorking.ver'
@@ -45,11 +45,12 @@ working_scenario_routes_fixed_name = bus_routes_fix_path / 'scenarioWorkingRoute
 route_search_version = bus_routes_fix_path / 'route_search_model.ver'
 
 network_file_name = bus_routes_fix_path / 'NetworkFileError.net'
-network_file_name_short = bus_routes_fix_path / 'NetworkFileErrorShort.net'
+network_file_table_of_links = bus_routes_fix_path / 'NetworkFileErrorLinks.net'
+network_file_table_of_turns = bus_routes_fix_path / 'NetworkFileErrorTurns.net'
 
 route_deleted_transfer_file = bus_routes_fix_path / 'routeDeletedTransfer.tra'
-route_added_transfer_file_start = bus_routes_fix_path / 'routeTransferFileStart.tra'
-route_transfer_file_temp_name = bus_routes_fix_path / 'routeTransferFileTemp.tra'
-route_added_transfer_file_final = bus_routes_fix_path / 'routeTransferFileFinal.tra'
+route_added_transfer_file_start = bus_routes_fix_path / 'routeAddedTransferStart.tra'
+route_added_transfer_file_temp = bus_routes_fix_path / 'routeAddedTransferTemp.tra'
+route_added_transfer_file_final = bus_routes_fix_path / 'routeAddedTransferFileFinal.tra'
 routes_fixed_transfer_file = bus_routes_fix_path / 'routeFixedTransferFile.tra'
 error_mod_transfer_file = bus_routes_fix_path / 'error_mod_transfer_file.tra'

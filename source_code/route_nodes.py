@@ -12,8 +12,6 @@ class RouteNodes:
             # route_added_transfer_file_start is defined in the beginning of the main script
             lines = fp.readlines()
             start_line_index = False
-            counter1 = -1
-            counter2 = -1
             current_route = "0 "
             last_route = "0 "
 
@@ -23,13 +21,11 @@ class RouteNodes:
                 if start_line_index:
                     if "B;" in line:
                         node_stop = line.split(";")[3:5]
-                        counter2 += 1
-                        node_stop_list_class.get_node_stop(counter2, node_stop, current_route)
+                        node_stop_list_class.get_node_stop( node_stop, current_route)
                         node_num = line.split(";")[3]
                         current_route = line.split(";")[1]
                         if node_num.isdigit() and current_route == last_route:
-                            counter1 += 1
-                            error_node_list_class.get_error_nodes(counter1, node_num, current_route)
+                            error_node_list_class.get_error_nodes(node_num, current_route)
                         last_route = current_route
                 if self.word3 in line:
                     start_line_index = True

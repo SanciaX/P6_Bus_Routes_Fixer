@@ -10,25 +10,24 @@ import shutil
 def prepare_visum_transferfile(Visum, this_project, working_scenario_name, num_of_routes, error_routes, error_dirs,
                         error_directions, working_scenario_delete_routes_name, route_added_transfer_file_start,
                         route_deleted_transfer_file):
-    # Load the previously exported .ver file
+    # Load the network before error occurs
     Visum.LoadVersion(working_scenario_name)
 
+    # Delete each route with error and save version
     for route_count in range(num_of_routes):
-        error_route = error_routes[route_count]
+        error_route_now = error_routes[route_count]
         error_dir = error_dirs[route_count]
         error_direction = error_directions[route_count]
+        error_route_name = f"{error_route_now} {error_dir}".strip()
+        print(f"Error Route: {error_route_now} {error_dir} ")
 
-        error_route_name = f"{error_route} {error_dir}".strip()
-        print(f"Error Route: {error_route} {error_dir} ")
-
-        # Delete the Route in error file and save version
-        route_to_delete = Visum.Net.LineRoutes.ItemByKey(error_route, error_direction, error_route_name)
+        route_to_delete = Visum.Net.LineRoutes.ItemByKey(error_route_now, error_direction, error_route_name)
         if route_to_delete:
             Visum.Net.RemoveLineRoute(route_to_delete)
 
     Visum.SaveVersion(working_scenario_delete_routes_name)
 
-    # Create a transfer file *.tra file from b to a (destination)
+    # Create a transfer file of adding routes (reverse the deletion action))
     Visum.GenerateModelTransferFileBetweenVersionFiles(
         working_scenario_delete_routes_name,
         working_scenario_name,
@@ -38,6 +37,7 @@ def prepare_visum_transferfile(Visum, this_project, working_scenario_name, num_o
         NonEmptyTablesOnly=True,
         WriteLayoutIntoModelTransferFile=True,
     )
+    # Create a transfer file of adding routes (the deletion action))
     Visum.GenerateModelTransferFileBetweenVersionFiles(
         working_scenario_name,
         working_scenario_delete_routes_name,
@@ -54,15 +54,15 @@ def prepare_visum_transferfile(Visum, this_project, working_scenario_name, num_o
     new_modification1.SetAttValue(
         "Description", "Copied from the last working modification and have problematic routes deleted"
     )
-    new_mod_no1 = int(new_modification1.AttValue("No"))
-    this_mod_name1 = new_modification1.AttValue("TraFile")
+    new_mode_delete_routes = int(new_modification1.AttValue("No"))
+    mode_delete_routes_name = new_modification1.AttValue("TraFile")
 
-    mod_file_name1 = (
+    mode_delete_routes_file = (
             "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-            + this_mod_name1
+            + mode_delete_routes_name
     )
     shutil.copy2(
-        route_deleted_transfer_file, mod_file_name1
+        route_deleted_transfer_file, mode_delete_routes_file
     )  # copy the transfer file to the path of the scenario management's Modification folder
 
-    return new_mod_no1, this_mod_name1, mod_file_name1
+    return new_mode_delete_routes, mode_delete_routes_name, mode_delete_routes_file

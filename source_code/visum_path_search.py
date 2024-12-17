@@ -2,8 +2,8 @@
 
 import shutil
 import win32com.client
-
-def visum_path_search(working_scenario_delete_routes_name, error_modification, network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_transfer_file_temp_name, fix_bus_route_class, route_added_transfer_file_final, modification_check):
+from config.read_json import *
+def visum_path_search(c, working_scenario_delete_routes_name, error_modification, network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check):
     Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
     Visum2.LoadVersion(working_scenario_delete_routes_name)
     Visum2.ApplyModelTransferFile(error_modification)
@@ -58,26 +58,26 @@ def visum_path_search(working_scenario_delete_routes_name, error_modification, n
     nodes_delete_list = modification_check.get_nodes_to_delete()
     if search_chains:
         shutil.copy2(
-            route_added_transfer_file_start, route_transfer_file_temp_name
+            route_added_transfer_file_start, route_added_transfer_file_temp
         )  # to keep the start file unchanged
         fix_bus_route_class.fix_routes(
-            nodes_delete_list, search_chains, route_transfer_file_temp_name, route_added_transfer_file_final
+            nodes_delete_list, search_chains, route_added_transfer_file_temp, route_added_transfer_file_final
         )
     Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
     Visum3.LoadVersion(working_scenario_delete_routes_name)
     anrController = Visum3.IO.CreateAddNetReadController()
-    anrController.SetWhatToDo("Line", C.AddNetRead_OverWrite)
-    anrController.SetWhatToDo("LineRoute", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("LineRouteItem", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("TimeProfile", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("TimeProfileItem", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("VehJourney", C.AddNetRead_Ignore)
+    anrController.SetWhatToDo("Line", c.AddNetRead_OverWrite)
+    anrController.SetWhatToDo("LineRoute", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("LineRouteItem", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("TimeProfile", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("TimeProfileItem", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("VehJourney", c.AddNetRead_Ignore)
     anrController.SetUseNumericOffset("VehJourney", True)
-    anrController.SetWhatToDo("VehJourneyItem", C.AddNetRead_DoNothing)
-    anrController.SetWhatToDo("VehJourneySection", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("ChainedUpVehJourneySection", C.AddNetRead_DoNothing)
-    anrController.SetWhatToDo("UserAttDef", C.AddNetRead_Ignore)
-    anrController.SetWhatToDo("Operator", C.AddNetRead_OverWrite)
+    anrController.SetWhatToDo("VehJourneyItem", c.AddNetRead_DoNothing)
+    anrController.SetWhatToDo("VehJourneySection", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("ChainedUpVehJourneySection", c.AddNetRead_DoNothing)
+    anrController.SetWhatToDo("UserAttDef", c.AddNetRead_Ignore)
+    anrController.SetWhatToDo("Operator", c.AddNetRead_OverWrite)
 
     anrController.SetConflictAvoidingForAll(10000, "ORG_")
     Visum3.ApplyModelTransferFile(error_modification, anrController)

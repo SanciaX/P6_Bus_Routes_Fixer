@@ -5,7 +5,7 @@ Read error message and the modification causing errors
 class ErrorNodes:
     def __init__(self, error_message_file):
         self.error_message_file = error_message_file
-        #self.word = "Warning Line route"
+        self.word = "Warning Line route"
         self.word1 = "Error Line route"
         self.word_turn = ": Turn"
         self.word_turn_block = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
@@ -15,7 +15,7 @@ class ErrorNodes:
         self.word_no_link_provide = "Error No link provided between node"
         self.word_no_line_route_item_node = "Error No line route item was found at node"
         self.word_no_line_route_item_stop = "Error No line route item was found at stop point"
-        self.word_mojibake = "turns are closed for the transport system"
+        self.error_route_mojibake = "None"
 
 
     def read_error_file(self, error_route_list_class, node_check_list_class):
@@ -29,31 +29,33 @@ class ErrorNodes:
         """
         with open(self.error_message_file, "r") as fp:
             lines = fp.readlines()
-
         counter1 = 0
         for line in lines:
             line = line.strip()
             if all(word in line for word in [self.word1, self.word_turn, self.word_turn_block]):
                 parts = line.split("->")
-                node_t1 = parts[1][:8]
-                node_t2 = parts[2][:8]
-                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block")
+                node_t1 = parts[0][-8:]
+                node_t2 = parts[1][:8]
+                node_t3 = parts[2][:8]
+                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block1")
+                node_check_list_class.get_node_checklist(node_t2, node_t3, "Turn block2")
 
-            if all(word in line for word in [self.word_link1, self.word_link_close]):
+            elif all(word in line for word in [self.word_link1, self.word_link_close]):
                 num_node_pair = line.count("(")
                 for i in range(num_node_pair):
                     node_t1 = line.split('(')[i+1][0:8]
                     node_t2 = line.split('->')[i+1][0:8]
                     node_check_list_class.get_node_checklist(node_t1, node_t2, "Link Close")
 
-            if self.word_no_link_provide in line:
+            elif self.word_no_link_provide in line:
                 parts = line.split("node")
                 node_t1 = parts[1][1:9]
                 node_t2 = parts[2][1:9]
                 node_check_list_class.get_node_checklist(node_t1, node_t2, "No Link")
 
             # if self.word in line or self.word1 in line:
-            if self.word1 in line:
+            #if '%' not in line:
+            if self.word in line or self.word1 in line:
                 start_index = line.find(';') + 1
                 blank_string = " "
                 space_index = 0
@@ -70,9 +72,12 @@ class ErrorNodes:
                 direction = line[semi_colon_index + 1:semi_colon_index + 2]
                 error_route_list_class.get_error_route(counter1, bus_route_number, bus_route_dir, direction)
                 counter1 += 1
+            if  '%'  in line:
+                self.error_route_mojibake = line.split(';')[1]
+                print('Cannot identify problematic nodes, links or turns along the following route:', line)
                 #THE ABOVE CODES CAN BE SHORTENED...
-            #if self.word_mojibake in line:
-
+    def get_route_mojibake(self):
+        return self.error_route_mojibake
 
 """Recognise potential errors from the modification causing errors """
 class ModificationCheckList:

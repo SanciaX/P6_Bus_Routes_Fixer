@@ -1,7 +1,7 @@
 import win32com.client
 
 def copy_files_from_scenario_management(Visum,
-        this_project, error_scenario_id, error_message_dir,
+        this_project, error_scenario_id, scenarios_path,
         working_scenario_name, network_file_name, error_message_log
 ):
 
@@ -15,8 +15,8 @@ def copy_files_from_scenario_management(Visum,
     working_scenario.SetAttValue("CODE", "BusRouteFixed")
     working_scenario.SetAttValue("PARAMETERSET", "1")
     working_scenario.SetAttValue("MODIFICATIONS", working_mod_set)
-
-    error_message_file_working = error_message_dir + str(working_scenario_id) + ".txt"
+    working_scenario_path = 'S000000'[:-len(str(int(working_scenario_id)))] + str(int(working_scenario_id))
+    error_message_file_working =  scenarios_path / working_scenario_path / 'Messages.txt'
     Visum.SetErrorFile(error_message_file_working)
     working_scenario.LoadInput()
     Visum.SaveVersion(working_scenario_name)
