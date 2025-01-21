@@ -1,7 +1,7 @@
 """
 Get the lists of Node1, Node2 on the problematic bus routes between which
 the link/turn may be problematic
-Note that on the lists there are nodes along all the problematic bus routes, not always only one.
+Note that on the lists there are nodes along all the problematic bus routes, not always only one route.
 """
 class NodeCheckList:
     my_class_var_1 = "1"
@@ -20,7 +20,6 @@ class NodeCheckList:
          error_type is identified in Class ErrorNodes
         :return: error_type
         """
-
         if [node1, node2] not in  self.anode12_pair:
             self.anode1.append(node1)
             self.anode2.append(node2)

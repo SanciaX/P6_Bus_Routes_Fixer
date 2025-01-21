@@ -4,36 +4,34 @@ class FixBusRoute:
     def __init__(self,):
         self.word3 = '$+LINEROUTEITEM'  # Start
         self.word4 = '$+TIMEPROFILE'  # end
-    def fix_routes(self, nodes_removal_list, chains, file_read, file_write):
-        with open(file_write, "w") as fw, open(file_read, "r") as fp:
+    def fix_routes(self, nodes_removal_list, chains, file_read):
+        for chain in chains:
+            line_start = []
+            first, second, *middle, last = chain  # first being the route id
+        with open(file_read, "r") as fp:
             lines = fp.readlines()
-            inside_block = False
-            new_lines = []
+        with open(file_read, "w") as fw:
+            start_idx = end_idx = -1
+            # Identify the rows containing str1 and str2, and str1 and str3
+            for idx, line in enumerate(lines):
+                if str(first) in line and str(second) in line:
+                    start_idx = idx
+                elif str(first) in line and str(last) in line:
+                    end_idx = idx
+                    break
+                #line = line.strip()
+            # Write lines up to the start index
+            for i in range(start_idx + 1):
+                fw.write(lines[i])
 
-            for i, line in enumerate(lines):
-                line = line.strip()
-                if self.word3 in line:
-                    inside_block = True
-                elif self.word4 in line:
-                    inside_block = False
-                new_lines.append(line)
+            # Insert new rows based on the `middle` list
+            for mid in middle:
+                parts = line.split(';')
+                parts[3] = str(mid)
+                new_line = ';'.join(parts)
+                fw.write(new_line)
 
-                if inside_block and i < len(lines) - 1:
-                    next_line = lines[i + 1].strip()
-                    if any(node in line for node in nodes_removal_list):
-                        continue
+            # Write lines from the end index
+            for i in range(end_idx, len(lines)):
+                fw.write(lines[i])
 
-                    for chain in chains:
-                        first, second, *middle, last = chain
-                        if (
-                            str(first) in line
-                            and str(second) in line
-                            and str(first) in next_line
-                            and str(last) in next_line
-                        ):
-                            new_lines.append(next_line)
-                            for mid in middle:
-                                new_lines.append(next_line.replace(str(last), str(mid)))
-                            i += 1
-
-            fw.write("\n".join(new_lines))

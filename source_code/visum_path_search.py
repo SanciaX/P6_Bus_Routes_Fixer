@@ -3,31 +3,31 @@
 import shutil
 import win32com.client
 from config.read_json import *
-def visum_path_search(c, working_scenario_delete_routes_name, error_modification, network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check):
+def visum_path_search(c, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check):
     Visum2 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
     Visum2.LoadVersion(working_scenario_delete_routes_name)
     Visum2.ApplyModelTransferFile(error_modification)
-    Visum2.IO.LoadNet(network_file_name, ReadAdditive=False)
+    Visum2.IO.LoadNet(error_scenario_network_file_name, ReadAdditive=False)
 
     # Messages in the widget
     all_messages = ""
 
     # Initialise variables to track state
     n_found = False
-    a_n = None
-    search_chains = []  # the list of lists of nodes needing to be added to the route
+    node_start = None
+    node_end = None
+    search_chains = []  # the list of lists of nodes needing to be added to the route, Note that there may be multiple chains in search_chains
 
     for i in range(len(node_links)):
         if node_links[i][2] != 1 and not n_found:
-            a_n = node_links[i][0]  # Capture the first column value as a_n
-            n_found = True  # We found a_n, now we search for a_m
-
-        if node_links[i][2] == 1 and n_found:
-            a_m = node_links[i][0]  # Capture the first column value as a_m
+            node_start = node_links[i][0]  # Capture the first column value as node_start
+            n_found = True  # We found node_start, now we search for node_end
+        elif node_links[i][2] == 1 and n_found:
+            node_end = node_links[i][0]
             try:
                 aNetElementContainer = Visum2.CreateNetElements()
-                node1 = Visum2.Net.Nodes.ItemByKey(int(a_n))
-                node2 = Visum2.Net.Nodes.ItemByKey(int(a_m))
+                node1 = Visum2.Net.Nodes.ItemByKey(int(node_start))
+                node2 = Visum2.Net.Nodes.ItemByKey(int(node_end))
                 aNetElementContainer.Add(node1)
                 aNetElementContainer.Add(node2)
                 Visum2.Analysis.RouteSearchPrT.Execute(
@@ -36,24 +36,23 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
                 NodeChain = Visum2.Analysis.RouteSearchPrT.NodeChainPrT
                 chain = [error_route_list[i]]
                 for n in range(len(NodeChain)):
-                    chain.append(NodeChain[n].AttValue("NO"))
-                if chain != [error_route_list[i]]:  # the first item being the route
+                    chain.append(NodeChain[(n+1)].AttValue("NO"))
+                if chain != [error_route_list[i]]:  # the first item of search_chains is the route
                     search_chains.append(chain)
                 Visum2.Analysis.RouteSearchPrT.Clear()
             except Exception:
-                message = f"Warning: Shortest Path is not found between {a_n} and {a_m}."
+                message = f"Warning: Shortest Path is not found between {node_start} and {node_end}."
                 all_messages += message + "\n"
             n_found = False
 
-    for sublist in search_chains:
-        for i in range(1, len(sublist)):
-            sublist[i] = int(sublist[i])
+    for each_chain in search_chains: # each chain
+        for i in range(1, len(each_chain)):
+            each_chain[i] = int(each_chain[i])
 
     if search_chains:
         all_messages += "Dear Modeller: the following routes have been rerouted through shortest path. Please review the routes and make necessary changes"
     for chain in search_chains:
-        message = f"Route {chain[0]}: please review the route between {chain[1]} and {chain[-1]}"
-        print(message)
+        print(f"Route {chain[0]}: please review the route between {chain[1]} and {chain[-1]}")
 
     nodes_delete_list = modification_check.get_nodes_to_delete()
     if search_chains:
@@ -61,10 +60,14 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
             route_added_transfer_file_start, route_added_transfer_file_temp
         )  # to keep the start file unchanged
         fix_bus_route_class.fix_routes(
-            nodes_delete_list, search_chains, route_added_transfer_file_temp, route_added_transfer_file_final
+            nodes_delete_list, search_chains, route_added_transfer_file_temp
+        )
+        shutil.copy2(
+            route_added_transfer_file_temp, route_added_transfer_file_final
         )
     Visum3 = win32com.client.gencache.EnsureDispatch("Visum.Visum.25")
     Visum3.LoadVersion(working_scenario_delete_routes_name)
+    #Set up anrController to avoid errors that may occur when loading error_modification or route_added_transfer_file_final if .tra contains deleted-route-related item
     anrController = Visum3.IO.CreateAddNetReadController()
     anrController.SetWhatToDo("Line", c.AddNetRead_OverWrite)
     anrController.SetWhatToDo("LineRoute", c.AddNetRead_Ignore)
@@ -80,7 +83,7 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
     anrController.SetWhatToDo("Operator", c.AddNetRead_OverWrite)
 
     anrController.SetConflictAvoidingForAll(10000, "ORG_")
-    Visum3.ApplyModelTransferFile(error_modification, anrController)
+    Visum3.ApplyModelTransferFile(error_modification, anrController) # CHECK WHAT IF error_modification CONTAINS ROUTE ITEMS RELATED CHANGE THAT MAY LEAD TO AN ERROR
     Visum3.SaveVersion(working_scenario_load_error_mod)
     Visum3.GenerateModelTransferFileBetweenVersionFiles(
         working_scenario_delete_routes_name,
@@ -92,7 +95,7 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
         WriteLayoutIntoModelTransferFile=True,
     )
 
-    Visum3.ApplyModelTransferFile(route_added_transfer_file_final, anrController)
+    Visum3.ApplyModelTransferFile(str(route_added_transfer_file_final), anrController)
     Visum3.SaveVersion(working_scenario_routes_fixed_name)
     Visum3.GenerateModelTransferFileBetweenVersionFiles(
         working_scenario_load_error_mod,

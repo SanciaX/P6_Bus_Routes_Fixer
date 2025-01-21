@@ -8,10 +8,11 @@ class ErrorNodes:
         self.word = "Warning Line route"
         self.word1 = "Error Line route"
         self.word_turn = ": Turn"
-        self.word_turn_block = "is blocked for the transport system" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
+        self.word_turn_block = "is blocked for" # e.g. Error Line route 168;168 SB;>: Turn 10037016->10048187->10026747 is blocked for the transport system B.
+        self.word_turn_close = "closed for"
         # link close error
-        self.word_link1 = "link"
-        self.word_link_close = "closed for the transport system B" # INCLUDE BOTH ONE LINK ERROR AND MULTIPLE ERRORS e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
+        self.word_link1 = "ink"
+        self.word_link_close = "closed for" # INCLUDE BOTH ONE LINK ERROR AND MULTIPLE ERRORS e.g. Error Line route 176;176 NB;>: 2 links are closed for the transport system B. Affected links: 24000455(10010348->24000154); 24000456(24000154->10053158)
         self.word_no_link_provide = "Error No link provided between node"
         self.word_no_line_route_item_node = "Error No line route item was found at node"
         self.word_no_line_route_item_stop = "Error No line route item was found at stop point"
@@ -32,26 +33,34 @@ class ErrorNodes:
         counter1 = 0
         for line in lines:
             line = line.strip()
-            if all(word in line for word in [self.word1, self.word_turn, self.word_turn_block]):
-                parts = line.split("->")
-                node_t1 = parts[0][-8:]
-                node_t2 = parts[1][:8]
-                node_t3 = parts[2][:8]
-                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block1")
-                node_check_list_class.get_node_checklist(node_t2, node_t3, "Turn block2")
-
-            elif all(word in line for word in [self.word_link1, self.word_link_close]):
+            if all(word in line for word in [self.word_link1, self.word_link_close]):
                 num_node_pair = line.count("(")
                 for i in range(num_node_pair):
                     node_t1 = line.split('(')[i+1][0:8]
                     node_t2 = line.split('->')[i+1][0:8]
-                    node_check_list_class.get_node_checklist(node_t1, node_t2, "Link Close")
+                    node_check_list_class.get_node_checklist(node_t1, node_t2, "Link Close, causing Turn block if there is a Turn block1 error but no Turn block2 error")
 
             elif self.word_no_link_provide in line:
                 parts = line.split("node")
                 node_t1 = parts[1][1:9]
                 node_t2 = parts[2][1:9]
                 node_check_list_class.get_node_checklist(node_t1, node_t2, "No Link")
+
+            elif all(word in line for word in [self.word1, self.word_turn, self.word_turn_block]):
+                parts = line.split("->")
+                node_t1 = parts[0][-8:]
+                node_t2 = parts[1][:8]
+                node_t3 = parts[2][:8]
+                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn block1")
+                node_check_list_class.get_node_checklist(node_t2, node_t3, "Turn block2, possibly due to Link close")
+
+            elif all(word in line for word in [self.word1, self.word_turn, self.word_turn_close]):
+                parts = line.split("->")
+                node_t1 = parts[0][-8:]
+                node_t2 = parts[1][:8]
+                node_t3 = parts[2][:8]
+                node_check_list_class.get_node_checklist(node_t1, node_t2, "Turn close1")
+                node_check_list_class.get_node_checklist(node_t2, node_t3, "Turn close2")
 
             # if self.word in line or self.word1 in line:
             #if '%' not in line:
@@ -109,19 +118,18 @@ class ModificationCheckList:
                             n2, n3 = int(parts[1]), int(parts[2])
                             if any(
                                     error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
-                                    #error_node_list1 is defined as error_node_list_class.check_node1() in the main script
                                     for i in range(len(error_node_list1) - 1)
-                            ):
-                                list0.append([n2, n3, 5])
+                            ): # if n2, n3 are consecutive nodes along the error routes
+                                list0.append([n2, n3, 5]) #5: turn block error
 
-                if "LINK:" in line:
+                if "LINK:" in line and "TSYSSET" in line:
                     inside_link_block = True
                     continue
 
                 if inside_link_block:
                     if not line:
                         inside_link_block = False
-                    elif "B," not in line:
+                    elif "B" not in line:
                         parts = line.split(";")
                         if len(parts) > 2:
                             n2, n3 = int(parts[1]), int(parts[2])
@@ -129,7 +137,23 @@ class ModificationCheckList:
                                     error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
                                     for i in range(len(error_node_list1) - 1)
                             ):
-                                list0.append([n2, n3, 4])
+                                list0.append([n2, n3, 4])# code 4: 'link closed'
+
+                if "Table: Links (deleted)" in line:
+                    inside_link_block = True
+                    continue
+                if inside_link_block:
+                    if not line:
+                        inside_link_block = False
+                    elif "*" not in line:
+                        parts = line.split(";")
+                        if len(parts) > 2:
+                            n2, n3 = int(parts[1]), int(parts[2])
+                            if any(
+                                    error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
+                                    for i in range(len(error_node_list1) - 1)
+                            ):
+                                list0.append([n2, n3, 3])# code 3: 'no link provided'
 
                 if "Table: Nodes (deleted)" in line:
                     inside_link_block = True
@@ -151,5 +175,5 @@ class ModificationCheckList:
     def get_links_to_check(self):
         return self.links_to_check
 
-    def get_nodes_to_delete(self):
+    def get_nodes_to_delete(self): #node(s) to be deleted from the route items
         return self.nodes_to_delete

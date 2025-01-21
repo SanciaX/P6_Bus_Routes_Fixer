@@ -2,15 +2,16 @@ import win32com.client
 
 def copy_files_from_scenario_management(Visum,
         this_project, error_scenario_id, scenarios_path,
-        working_scenario_name, network_file_name, error_message_log
+        working_scenario_name, error_scenario_network_file_name, error_message_log
 ):
 
     # Create a new scenario containing the modifications before the error occurs and save the .ver file
     error_scenario = Visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(error_scenario_id)
     old_mod_set = error_scenario.AttValue("MODIFICATIONS")
-    working_mod_set = old_mod_set[:-2]
+    mod_list = old_mod_set.split(',')
+    working_mod_set = ','.join(mod_list[:-1])
 
-    working_scenario = this_project.AddScenario()
+    working_scenario = this_project.AddScenario() # Add a new scenario with all the modifications before the error occurs
     working_scenario_id = working_scenario.AttValue("NO")
     working_scenario.SetAttValue("CODE", "BusRouteFixed")
     working_scenario.SetAttValue("PARAMETERSET", "1")
@@ -23,7 +24,7 @@ def copy_files_from_scenario_management(Visum,
 
     error_scenario.LoadInput()
     Visum.IO.SaveNet(
-        network_file_name,
+        error_scenario_network_file_name,
         LayoutFile="",
         EditableOnly=True,
         NonDefaultOnly=True,
