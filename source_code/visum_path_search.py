@@ -52,13 +52,15 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
     if search_chains:
         all_messages += "Dear Modeller: the following routes have been rerouted through shortest path. Please review the routes and make necessary changes"
     for chain in search_chains:
-        print(f"Route {chain[0]}: please review the route between {chain[1]} and {chain[-1]}")
+        print(f"Route {chain[0]}: the route between {chain[1]} and {chain[-1]} is found through shortest path search, please review the route in the model")
 
     nodes_delete_list = modification_check.get_nodes_to_delete()
     if search_chains:
         shutil.copy2(
             route_added_transfer_file_start, route_added_transfer_file_temp
         )  # to keep the start file unchanged
+        fix_bus_route_class.adjust_routes(error_route_list, error_modification, processed_error_mod_transfer_file,
+                      route_added_transfer_file_temp)
         fix_bus_route_class.fix_routes(
             nodes_delete_list, search_chains, route_added_transfer_file_temp
         )

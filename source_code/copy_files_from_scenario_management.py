@@ -13,7 +13,7 @@ def copy_files_from_scenario_management(Visum,
 
     working_scenario = this_project.AddScenario() # Add a new scenario with all the modifications before the error occurs
     working_scenario_id = working_scenario.AttValue("NO")
-    working_scenario.SetAttValue("CODE", "BusRouteFixed")
+    working_scenario.SetAttValue("CODE", "FixingBusRoute")
     working_scenario.SetAttValue("PARAMETERSET", "1")
     working_scenario.SetAttValue("MODIFICATIONS", working_mod_set)
     working_scenario_path = 'S000000'[:-len(str(int(working_scenario_id)))] + str(int(working_scenario_id))

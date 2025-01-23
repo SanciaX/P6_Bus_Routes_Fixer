@@ -67,7 +67,7 @@ all_messages, search_chains, nodes_delete_list, error_mod_transfer_file, routes_
 ## copying final transfer files to mod files
 from source_code.save_to_sm import save_to_sm
 new_mod_no2, this_mod_name2, mod_file_name2, new_mod_no3, this_mod_name3, mod_file_name3, new_mod_set, cur_scenario_id, error_message_file_fixed = save_to_sm(
-    this_project, error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum
+    this_project, processed_error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum
 )
 
 ###### SHOW AND SAVE  WARNINGS IF THERE ARE ANY

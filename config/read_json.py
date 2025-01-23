@@ -56,3 +56,4 @@ route_added_transfer_file_temp = bus_routes_fix_path / 'routeAddedTransferTemp.t
 route_added_transfer_file_final = bus_routes_fix_path / 'routeAddedTransferFileFinal.tra'
 routes_fixed_transfer_file = bus_routes_fix_path / 'routeFixedTransferFile.tra'
 error_mod_transfer_file = bus_routes_fix_path / 'error_mod_transfer_file.tra'
+processed_error_mod_transfer_file = bus_routes_fix_path / 'processed_error_mod_transfer_file.tra'
