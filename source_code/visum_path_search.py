@@ -50,10 +50,10 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
             each_chain[i] = int(each_chain[i])
 
     if search_chains:
-        all_messages += "Dear Modeller: the following routes have been rerouted through shortest path. Please review the routes and make necessary changes"
+        all_messages += "Dear Modeller: the following routes have been rerouted through shortest path.\nPlease review the routes and make necessary changes. \n \n"
     for chain in search_chains:
-        print(f"Route {chain[0]}: the route between {chain[1]} and {chain[-1]} is found through shortest path search, please review the route in the model")
-        all_messages += f"Route {chain[0]}: the route between {chain[1]} and {chain[-1]} is found through shortest path search, please review the route in the model"
+        print(f"Route {chain[0]}: the route between {chain[1]} and {chain[-1]} is found through shortest path search, please review the route in the model.")
+        all_messages += f"Route {chain[0]}: the route between {chain[1]} and {chain[-1]} is found through shortest path search, please review the route in the model. \n"
     nodes_delete_list = modification_check.get_nodes_to_delete()
     if search_chains:
         shutil.copy2(

@@ -35,7 +35,7 @@ def save_to_sm(this_project, processed_error_mod_transfer_file, route_added_tran
     # apply the Modification with error
     last_comma_index = old_mod_set.rfind(',')
     new_mod_set = old_mod_set[:last_comma_index] + ","  + str(new_mod_delete_routes) + "," + str(new_mod_no2) + "," + str(new_mod_no3)
-    print(new_mod_set)
+    print("The scenario fixed has the following modifications: ", new_mod_set)
     cur_scenario = this_project.AddScenario()
     cur_scenario_id = cur_scenario.AttValue("NO")
     cur_scenario.SetAttValue("CODE", "BusRouteFixed")
