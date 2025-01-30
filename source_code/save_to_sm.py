@@ -1,9 +1,11 @@
 # source_code/save_to_sm.py
 
+from pathlib import WindowsPath
 # new error_modification
 import shutil
 
-def save_to_sm(this_project, processed_error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum):
+
+def save_to_sm(this_project,scenario_management_path, processed_error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum):
     # new error_modification
     new_modification = this_project.AddModification()
     new_modification.SetAttValue("Code", "Refined Problematic Modification")
@@ -13,10 +15,10 @@ def save_to_sm(this_project, processed_error_mod_transfer_file, route_added_tran
     )
     new_mod_no2 = int(new_modification.AttValue("No"))
     this_mod_name2 = new_modification.AttValue("TraFile")
-    mod_file_name2 = (
-        "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-        + this_mod_name2
-    )
+    str_path = str(scenario_management_path).replace('/', '\\\\')
+    mod_file_name2 = (str_path
+            + "\\Modifications\\"+ this_mod_name2)
+    #path_str =WindowsPath(mod_file_name2.replace('\\\\', '/'))
     shutil.copy2(processed_error_mod_transfer_file, mod_file_name2)  # to keep the start file unchanged
 
     # add the fixed routes
@@ -27,10 +29,11 @@ def save_to_sm(this_project, processed_error_mod_transfer_file, route_added_tran
     this_mod_name3 = new_modification.AttValue("TraFile")
 
     mod_file_name3 = (
-        "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-        + this_mod_name3
+        str_path
+            + "\\Modifications\\" + this_mod_name3
     )
-    shutil.copy2(route_added_transfer_file_final, mod_file_name3)  # to keep the start file unchanged
+    path_str = str(route_added_transfer_file_final).replace('/', '\\\\')
+    shutil.copy2(path_str, mod_file_name3)  # to keep the start file unchanged
 
     # apply the Modification with error
     last_comma_index = old_mod_set.rfind(',')

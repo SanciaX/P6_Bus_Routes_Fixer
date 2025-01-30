@@ -21,6 +21,7 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
     for i in range(len(node_links)):
         if node_links[i][2] != 1 and not n_found:
             node_start = node_links[i][0]  # Capture the first column value as node_start
+
             n_found = True  # We found node_start, now we search for node_end
         elif node_links[i][2] == 1 and n_found:
             node_end = node_links[i][0]
@@ -59,11 +60,14 @@ def visum_path_search(c, working_scenario_delete_routes_name, error_modification
         shutil.copy2(
             route_added_transfer_file_start, route_added_transfer_file_temp
         )  # to keep the start file unchanged
-        fix_bus_route_class.adjust_routes(error_route_list, error_modification, processed_error_mod_transfer_file,
+        timeprofile = fix_bus_route_class.adjust_routes(error_route_list, error_modification, processed_error_mod_transfer_file,
                       route_added_transfer_file_temp)
+
         fix_bus_route_class.fix_routes(
             nodes_delete_list, search_chains, route_added_transfer_file_temp
         )
+        fix_bus_route_class.fix_profile(route_added_transfer_file_temp, timeprofile)
+
         shutil.copy2(
             route_added_transfer_file_temp, route_added_transfer_file_final
         )

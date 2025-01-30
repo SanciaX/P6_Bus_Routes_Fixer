@@ -7,7 +7,7 @@
 
 import shutil
 
-def prepare_visum_transferfile(Visum, this_project, working_scenario_name, num_of_routes, error_routes, error_dirs,
+def prepare_visum_transferfile(Visum, scenario_management_path, this_project, working_scenario_name, num_of_routes, error_routes, error_dirs,
                         error_directions, working_scenario_delete_routes_name, route_added_transfer_file_start,
                         route_deleted_transfer_file):
     # Load the network before error occurs
@@ -56,10 +56,10 @@ def prepare_visum_transferfile(Visum, this_project, working_scenario_name, num_o
     )
     new_mod_delete_routes = int(new_modification1.AttValue("No"))
     mod_delete_routes_name = new_modification1.AttValue("TraFile")
-
+    str_path = str(scenario_management_path).replace('/', '\\\\')
     mod_delete_routes_file = (
-            "C:\\Users\\Shanshan Xie\\TfL\\06 Scenario management\\SM_TESTING\\Modifications\\"
-            + mod_delete_routes_name
+            str_path
+            + "\\Modifications\\"+ mod_delete_routes_name
     )
     shutil.copy2(
         route_deleted_transfer_file, mod_delete_routes_file

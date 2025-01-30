@@ -101,15 +101,19 @@ class ModificationCheckList:
         with open(modification_file, "r") as fp:
             lines = fp.readlines()
             inside_turn_block = False
+            turn_delete = False
+            link_delete = False
             inside_link_block = False
             for line in lines:
                 line = line.strip()
 
-                if "TURN:FROMNODENO" in line:
+                if "Table: Turns (deleted)" in line:
+                    turn_delete = True
+                elif "TURN:FROMNODENO" in line and turn_delete:
                     inside_turn_block = True
                     continue
 
-                if inside_turn_block:
+                elif inside_turn_block:
                     if not line:
                         inside_turn_block = False
                     elif "B," not in line:
@@ -122,11 +126,13 @@ class ModificationCheckList:
                             ): # if n2, n3 are consecutive nodes along the error routes
                                 list0.append([n2, n3, 5]) #5: turn block error
 
-                if "LINK:" in line and "TSYSSET" in line:
+                elif "Table: Links (deleted)" in line:
+                    link_delete = True
+                elif "LINK:" in line and "TSYSSET" in line and link_delete:
                     inside_link_block = True
                     continue
 
-                if inside_link_block:
+                elif inside_link_block:
                     if not line:
                         inside_link_block = False
                     elif "B" not in line:
@@ -137,29 +143,14 @@ class ModificationCheckList:
                                     error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
                                     for i in range(len(error_node_list1) - 1)
                             ):
-                                list0.append([n2, n3, 4])# code 4: 'link closed'
-
-                if "Table: Links (deleted)" in line:
-                    inside_link_block = True
-                    continue
-                if inside_link_block:
-                    if not line:
-                        inside_link_block = False
-                    elif "*" not in line:
-                        parts = line.split(";")
-                        if len(parts) > 2:
-                            n2, n3 = int(parts[1]), int(parts[2])
-                            if any(
-                                    error_node_list1[i] == str(n2) and error_node_list1[i + 1] == str(n3)
-                                    for i in range(len(error_node_list1) - 1)
-                            ):
                                 list0.append([n2, n3, 3])# code 3: 'no link provided'
 
-                if "Table: Nodes (deleted)" in line:
+
+                elif "Table: Nodes (deleted)" in line:
                     inside_link_block = True
                     continue
 
-                if inside_link_block:
+                elif inside_link_block:
                     if not line:
                         inside_link_block = False
                     elif "*" not in line and "$" not in line:
