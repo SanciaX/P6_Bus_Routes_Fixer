@@ -48,6 +48,7 @@ class FixBusRoute:
             elements_delete = elements_delete[:elements_delete.index('')]
         except:
             pass
+
         # '* Table: Line route items (Element inserted)
         elements_insert =[]
         elements_to_find = [
@@ -56,13 +57,14 @@ class FixBusRoute:
             '$>LINEROUTEITEM:LINENAME;LINEROUTENAME;DIRECTIONCODE;>NODENO;>STOPPOINTNO;>TRAVERSAL;NODENO;STOPPOINTNO;TRAVERSAL;ISROUTEPOINT;POSTLENGTH;ADDVAL;IBUSLENGTH\n',
         ]
         collect_items = False
+        start_table = False
         for line in mod_lines:
-            if collect_items:
+            if '* Table: Line route items (Element inserted)' in line:
+                start_table = True
+            elif '$>LINEROUTEITEM:' in line:
+                collect_items = True
+            elif collect_items and start_table:
                 elements_insert.append(line)
-            elif line in elements_to_find:
-                elements_to_find.remove(line)
-                if not elements_to_find:
-                    collect_items = True
             elif line == '\n' and collect_items:
                 collect_items = False
         elements_insert = [item.rstrip('\n') for item in elements_insert]
@@ -98,11 +100,6 @@ class FixBusRoute:
         # '* Table: Time profile items (Element inserted)
         # Add time profile items added in ErrorMod
         time_profile = []
-        #elements_to_find = [
-            #'* Table: Time profile items (Element inserted)\n',
-            #'* \n',
-            #'$+TIMEPROFILEITEM:LINENAME;LINEROUTENAME;DIRECTIONCODE;TIMEPROFILENAME;NODENO;STOPPOINTNO;TRAVERSAL;ALIGHT;BOARD;PRERUNTIME;STOPTIME;NUMFAREPOINTS;NUMFAREPOINTSBOARD;NUMFAREPOINTSTHROUGH;NUMFAREPOINTSALIGHT;ADDVAL;JOURNEYTIMESSTRINGAM;JOURNEYTIMESSTRINGIP;JOURNEYTIMESSTRINGPM;JT_AM;JT_IP;JT_PM;TCUR_BUS\n',
-        #]
         table_start = False
         collect_items = False
         for line in mod_lines:
@@ -147,10 +144,11 @@ class FixBusRoute:
                         start_insert = True
                         if elements_insert[0].split(';')[1] == elements_insert[0+1].split(';')[1] and ((elements_insert[0].split(';')[6] == elements_insert[0+1].split(';')[3] and elements_insert[0].split(';')[6] != '') or (elements_insert[0].split(';')[7] == elements_insert[0+1].split(';')[4] and elements_insert[0].split(';')[7] != '')):
                             insert_next = True
-                            elements_insert = elements_insert[1:]
                         else:
                             insert_next = False
-                            elements_insert = elements_insert[1:]
+                            parts_ordered = parts[:3] + parts[6:]
+                            fw.writelines(';'.join(parts_ordered) + '\n')
+                        elements_insert = elements_insert[1:]
                     elif not element_short in line and start_insert:
                         if insert_next:
                             parts_ordered = parts[:5] + parts[8:]
@@ -161,14 +159,20 @@ class FixBusRoute:
                             else:
                                 insert_next = False
                                 start_insert = False
+                                parts_ordered = parts[:3] + parts[6:]
+                                fw.writelines(';'.join(parts_ordered) + '\n')
                                 elements_insert = elements_insert[1:]
                                 break
-                    if len(elements_insert) == 1:
-                        parts = elements_insert[0].split(';')
-                        parts_ordered = parts[:5] + parts[8:]
-                        fw.writelines(';'.join(parts_ordered) + '\n')
-                        parts_ordered = parts[:3] + parts[6:]
-                        fw.writelines(';'.join(parts_ordered) + '\n')
+                        else:
+                            parts_ordered = parts[:3] + parts[6:]
+                            fw.writelines(';'.join(parts_ordered) + '\n')
+                if len(elements_insert)==1:
+                    parts = elements_insert[0].split(';')
+                    parts_ordered = parts[:5] + parts[8:]
+                    fw.writelines(';'.join(parts_ordered) + '\n')
+                    parts_ordered = parts[:3] + parts[6:]
+                    fw.writelines(';'.join(parts_ordered) + '\n')
+                    elements_insert =[]
 
         # elements changed
         with open(route_added_transfer_file_temp, "r") as fp:
@@ -177,7 +181,7 @@ class FixBusRoute:
             for line in transfer_lines:
                 for element in elements_changed:
                     part_element = element.split(';')
-                    if ';'.join(part_element[:5]) in line:
+                    if (';'.join(part_element[:5])+';') in line:
                         part_line = line.split(';')
                         part_line[:6] = part_element[:6]
                         part_line[7] = part_element[6]
@@ -185,8 +189,6 @@ class FixBusRoute:
                 fw.writelines(line)
 
         # timeprofiles
-        start_insert = False
-        insert_next = False
         with open(route_added_transfer_file_temp, "r") as fp:
             transfer_lines = fp.readlines()
 
@@ -214,9 +216,10 @@ class FixBusRoute:
         stops = []
         for i in range(len(elements)):
             parts = elements[i].split(';')
-            element_short = parts[4]
-            stops.append(element_short)
-        stops = [stop for stop in stops if stop != '']
+            if parts[4] != '':
+                element_short = parts[1] + parts[4]
+                stops.append(element_short)
+        stops = [stop for stop in stops if stop[4:] != '']
 
         timeprofile = []
         elements_to_find = [
@@ -242,84 +245,174 @@ class FixBusRoute:
         timeprofile.extend(time_profile)
         #timeprofile = timeprofile[:-1]
         # Extract the characters between the 5th and 6th semicolons
-        def extract_5th_to_6th(string):
+
+        def extract_stops(string):
             p = string.split(';')
-            return p[5] if len(p) > 5 else None
-        #def extract_4th(string):
-            #p = string.split(';')
-            #return p[4] if len(p) > 5 else None
-        # Create a dictionary mapping the extracted characters to the corresponding strings
-        timeprofile_map = {extract_5th_to_6th(tp): tp for tp in timeprofile}
-        #routeitem_map = {extract_4th(tp): tp for tp in timeprofile}
+            return p[1] + p[5] if len(p) > 5 else None
+        timeprofile_map = {extract_stops(tp): tp for tp in timeprofile}
         # Reorder timeprofile based on the sequence of stops
         reordered_timeprofile = [timeprofile_map[stop] for stop in stops if stop in timeprofile_map]
 
         change_start = False
         change_firstline = False
-        change_stop = False
 
         with open(route_added_transfer_file_temp, "w") as fw:
             for line in transfer_lines:
                 if 'Table: Time profile items (inserted)' in line:
                     change_start = True
                     fw.writelines(line)
-                elif change_start and not change_firstline:
-                    fw.writelines(line)
-                elif change_start and '$+TIMEPROFILEITEM:' in line and not change_firstline:
+                elif change_start and 'TIMEPROFILEITEM:' in line and not change_firstline:
                     change_firstline = True
+                    fw.writelines(line)
+                elif change_start and not change_firstline:
                     fw.writelines(line)
                 elif change_start and change_firstline:
                     for i in reordered_timeprofile:
                         fw.writelines(i + '\n')
-                    if line == '\n':
-                        change_start = False
+                    change_start = False
+                elif not change_start and change_firstline and line == '\n':
                         change_firstline = False
                         fw.writelines(line)
-                if change_start == False and change_firstline == False:
+                elif change_start == False and change_firstline == False:
                     fw.writelines(line)
-        return timeprofile
 
-    def fix_routes(self, nodes_removal_list, chains, file_read):
-        for chain in chains:
-            line_start = []
-            first, second, *middle, last = chain  # first being the route id
+
+        with open(route_added_transfer_file_temp, "r") as fp:
+            routelines = fp.readlines()
+        node_list = []
+        start_table = False
+        start_record = False
+        for line in routelines:
+            if 'Table: Line route items (inserted)' in line:
+                start_table = True
+            elif start_table and '$+LINEROUTEITEM:' in line:
+                start_record = True
+            elif start_record and line != '\n':
+                parts = line.split(';')
+                node_list.append((parts[3], parts[1]))
+            elif line == '\n' and start_record:
+                start_record = False
+                start_table = False
+        node_list = [node for node in node_list if node[0] != '']
+        node_pair_list = []
+        turn_pair_list = []
+        for i in range(len(node_list)-1):
+            node_pair_list.append([node_list[i][0], node_list[i+1][0],node_list[i][1], node_list[i+1][1]])
+        for i in range(len(node_list)-2):
+            turn_pair_list.append([node_list[i][0], node_list[i+1][0], node_list[i+2][0],node_list[i][1], node_list[i+1][1], node_list[i+2][1]])
+        return timeprofile, node_pair_list, turn_pair_list
+
+    def fix_routes(self, nodes_delete_list, search_chains, file_read):
+        for i in range(len(search_chains)):
+            first, *middle, last = search_chains[i][0]
+            first = int(first)
+            last = int(last)
+            middle = [int(m) for m in middle]
+            # 1st 2nd and last nodes
+            route = search_chains[i][1]  # route
+            with open(file_read, "r") as fp:
+                lines = fp.readlines()
+            start_add = False
+            pause_read = False
+            end_add = False
+            with open(file_read, "w") as fw:
+                start_idx = end_idx = 0
+                for line in lines:
+                    if route in line and str(first) in line:
+                        start_add = True
+                        fw.write(line)
+                    elif route in line and str(last) in line:
+                        end_add = True
+                        fw.write(line)
+                    elif start_add and not end_add and not pause_read:
+                        try:
+                            for mid in middle:
+                                parts = line.split(';')
+                                parts[7] = '0.000km'
+                                parts[3] = str(mid)
+                                parts[4] = ''
+                                new_line = ';'.join(parts)
+                                fw.write(new_line)
+                        except:
+                            pass
+                        pause_read = True
+                    elif end_add:
+                        fw.write(line)
+                    elif not start_add:
+                        fw.write(line)
+
+        #fix u-turn(s)
         with open(file_read, "r") as fp:
-            lines = fp.readlines()
+            transfer_lines = fp.readlines()
+        start_table = False
+        start_record = False
+        end_table = False
+        nodes = []
+        new_lines = []
+        for line in transfer_lines:
+            if not start_table and 'Table: Line route items (inserted)' in line:
+                start_table = True
+            elif start_table and '$+LINEROUTEITEM:' in line:
+                start_record = True
+            elif start_record and line != '\n':
+                parts = line.split(';')
+                nodes.append([parts[1],parts[3]])
+                new_lines.append(line)
+            elif line == '\n' and start_record:
+                start_record = False
+                start_table = False
+        delete_list = []
+
+        for i in range(len(nodes)-1):
+            for n in range(i,len(nodes)-1):
+                if nodes[i] == nodes [n] and i !=n and nodes[i][1] != '':
+                    #for j in range(i,n):
+                        #nodes.pop(j)
+                    for m in list(range(i,n)):
+                        delete_list.append(m)
+        seen = set()
+        delete_idx = []
+        for item in delete_list:
+            if item not in seen:
+                seen.add(item)
+                delete_idx.append(item)
+        delete_list = delete_idx
+
+        updated_lines = []
+        for i in range(len(new_lines)):
+            if not i in delete_list:
+                updated_lines.append(new_lines[i])
+
         with open(file_read, "w") as fw:
-            start_idx = end_idx = -1
-            # Identify the rows containing str1 and str2, and str1 and str3
-            for idx, line in enumerate(lines):
-                if str(first) in line and str(second) in line:
-                    start_idx = idx
-                elif str(first) in line and str(last) in line:
-                    end_idx = idx
-                    break
-                #line = line.strip()
-            # Write lines up to the start index
-            for i in range(start_idx + 1):
-                fw.write(lines[i])
+            start_table = False
+            start_record = False
+            end_record = False
+            for line in transfer_lines:
+                if not start_table and not start_record and not 'Table: Line route items (inserted)' in line:
+                    fw.write(line)
+                elif start_table and '$+LINEROUTEITEM' in line:
+                    start_record = True
+                    fw.write(line)
+                elif start_record and line != '\n':
+                    if not end_record:
+                        for i in range(len(updated_lines)):
+                            fw.write(updated_lines[i])
+                    end_record = True
+                elif line == '\n' and start_record:
+                    start_record = False
+                    start_table = False
+                    fw.write(line)
+                elif not start_table and 'Table: Line route items (inserted)' in line:
+                    start_table = True
+                    fw.write(line)
+                elif start_table and not '$+LINEROUTEITEM' in line:
+                    fw.write(line)
 
-            # Insert new rows based on the `middle` list
-            try:
-                for mid in middle:
-                    parts = line.split(';')
-                    parts[7] = '0.000km'
-                    parts[3] = str(mid)
-                    new_line = ';'.join(parts)
-                    fw.write(new_line)
-            except:
-                pass
-
-            # Write lines from the end index
-            for i in range(end_idx, len(lines)):
-                fw.write(lines[i])
 
     def fix_profile(self,route_added_transfer_file_temp, timeprofile):
         # timeprofiles
         seen = set()
         timeprofile = [x for x in timeprofile if not (x in seen or seen.add(x))]
-        start_insert = False
-        insert_next = False
         with open(route_added_transfer_file_temp, "r") as fp:
             transfer_lines = fp.readlines()
 
@@ -347,9 +440,9 @@ class FixBusRoute:
         stops = []
         for i in range(len(elements)):
             parts = elements[i].split(';')
-            element_short = parts[4]
+            element_short = [parts[1],parts[4]]
             stops.append(element_short)
-        stops = [element for element in stops if element != '']
+        stops = [element for element in stops if element[1] != '']
 
         # timeprofile = timeprofile[:-1]
         # Extract the characters between the 5th and 6th semicolons
@@ -363,11 +456,11 @@ class FixBusRoute:
             else:
                 seen.add(x)
 
-        timeprofile_map = {extract_5th_to_6th(tp): tp for tp in timeprofile}
-
-        reordered_timeprofile = [timeprofile_map[stop] for stop in stops if stop in timeprofile_map]
-
-
+        reordered_timeprofile = []
+        for i in range(len(stops)):
+            for line in timeprofile:
+                if stops[i][0] in line and stops[i][1] == line.split(';')[5]:
+                    reordered_timeprofile.append(line)
         change_start = False
         change_firstline = False
         change_stop = False
@@ -393,3 +486,4 @@ class FixBusRoute:
                         fw.writelines(line)
                 elif change_start == False and change_firstline == False:
                     fw.writelines(line)
+

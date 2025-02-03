@@ -55,13 +55,13 @@ new_mod_delete_routes, mod_delete_routes_name, mod_delete_routes_file = prepare_
 ##  Fix the routes in the transfer file (route_added_transfer_file_start)
 #   Identify the list of node pairs to check
 from source_code.get_node12ok_list import get_node12ok_list
-modification_check, node_links, error_node_stop_list, num_of_node_stop, error_route_list_long, error_node_list1, error_route_list, num_of_nodes = get_node12ok_list(
+modification_check, node_links, error_node_stop_list, num_of_node_stop, error_route_list_long, error_node_list1, error_route_list, num_of_nodes, = get_node12ok_list(
     error_route_mojibake, RouteNodes, ErrorNodeList, ErrorNodeStopList, ModificationCheckList,  route_added_transfer_file_start, error_scenario_network_file_name, network_file_table_of_links, network_file_table_of_turns, error_modification, error_nodes_check, error_nodes_type_check, check_node_pair_ok_class
 )
 ## Create a new .ver for shortest path search (where problematic routes have been deleted)
 from source_code.visum_path_search import visum_path_search
 all_messages, search_chains, nodes_delete_list, error_mod_transfer_file, routes_fixed_transfer_file = visum_path_search(
-    C, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check
+    C, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check, network_file_table_of_links, network_file_table_of_turns, check_node_pair_ok_class
 )
 
 ## copying final transfer files to mod files

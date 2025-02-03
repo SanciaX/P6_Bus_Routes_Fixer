@@ -135,7 +135,10 @@ def get_node12ok_list(error_route_mojibake, routenodes, errornodelist, errornode
             filtered_node_turns_list.append(row)
             seen_turns.add(turn)
     node_turns_list = filtered_node_turns_list
-    
+
+############################################################
+##### DO NOT DELETE BELOW CODES!!!!!
+    # Below is needed to save turn tables and link tables of the erroneous network!!!
     start_marker_link = "$LINK:NO"
     end_marker_link = "$LINKPOLY"
     with open(error_scenario_network_file_name, "r") as fp: # error_scenario_network_file_name: network of the scenario with error(s)
@@ -161,12 +164,14 @@ def get_node12ok_list(error_route_mojibake, routenodes, errornodelist, errornode
     for line in lines:
         if start_marker_turn in line:
             in_between = True  # Start keeping lines
-        if in_between:
-            result_lines.append(line)  # result_lines contains the table of links in the error network
         if end_marker_turn in line:
             in_between = False  # Stop keeping lines
+        if in_between:
+            result_lines.append(line)  # result_lines contains the table of links in the error network
+
     with open(network_file_table_of_turns, "w") as output:
         output.writelines(result_lines)
+    ############################################################
 
     #counting_node = 0
     node_links = []
