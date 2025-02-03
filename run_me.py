@@ -47,7 +47,7 @@ from source_code.identify_error_routes import identify_errors
 ##  Load the working scenario to delete erroneous routes and create transfer files (1.deleted and 2.added)
 from source_code.visum_pre_search_path import prepare_visum_transferfile
 new_mod_delete_routes, mod_delete_routes_name, mod_delete_routes_file = prepare_visum_transferfile(
-    Visum, this_project, working_scenario_name, num_of_routes, error_routes, error_dirs,
+    Visum, scenario_management_path, this_project, working_scenario_name, num_of_routes, error_routes, error_dirs,
     error_directions, working_scenario_delete_routes_name, route_added_transfer_file_start,
     route_deleted_transfer_file
 )
@@ -55,19 +55,19 @@ new_mod_delete_routes, mod_delete_routes_name, mod_delete_routes_file = prepare_
 ##  Fix the routes in the transfer file (route_added_transfer_file_start)
 #   Identify the list of node pairs to check
 from source_code.get_node12ok_list import get_node12ok_list
-modification_check, node_links, error_node_stop_list, num_of_node_stop, error_route_list_long, error_node_list1, error_route_list, num_of_nodes = get_node12ok_list(
+modification_check, node_links, error_node_stop_list, num_of_node_stop, error_route_list_long, error_node_list1, error_route_list, num_of_nodes, = get_node12ok_list(
     error_route_mojibake, RouteNodes, ErrorNodeList, ErrorNodeStopList, ModificationCheckList,  route_added_transfer_file_start, error_scenario_network_file_name, network_file_table_of_links, network_file_table_of_turns, error_modification, error_nodes_check, error_nodes_type_check, check_node_pair_ok_class
 )
 ## Create a new .ver for shortest path search (where problematic routes have been deleted)
 from source_code.visum_path_search import visum_path_search
 all_messages, search_chains, nodes_delete_list, error_mod_transfer_file, routes_fixed_transfer_file = visum_path_search(
-    C, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check
+    C, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check, network_file_table_of_links, network_file_table_of_turns, check_node_pair_ok_class
 )
 
 ## copying final transfer files to mod files
 from source_code.save_to_sm import save_to_sm
 new_mod_no2, this_mod_name2, mod_file_name2, new_mod_no3, this_mod_name3, mod_file_name3, new_mod_set, cur_scenario_id, error_message_file_fixed = save_to_sm(
-    this_project, error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum
+    this_project, scenario_management_path, processed_error_mod_transfer_file, route_added_transfer_file_final, old_mod_set, new_mod_delete_routes, error_message_path, Visum
 )
 
 ###### SHOW AND SAVE  WARNINGS IF THERE ARE ANY

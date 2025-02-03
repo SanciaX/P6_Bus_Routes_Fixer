@@ -36,16 +36,16 @@ class CheckNodePairOk:
         if type_error != " ":
             if type_error == "No Link":
                 self.node12ok = 3  # self.node12ok = 3: there's no link between node1 and node2
-                print("No link between ", (self.node01, self.node02))
+                #print("No link between ", (self.node01, self.node02))
             elif type_error == "Link Close":
                 self.node12ok = 4  # self.node12ok = 4: there's a closed link between node1 and node2
-                print("Link close between ", (self.node01, self.node02))
+                #print("Link close between ", (self.node01, self.node02))
             elif type_error == "Turn block1": # This may be deleted, because turn block errors seem to be only causing by issues between node2 and node3, not between node1 and node2. Therefore, 'turn block1' doesn't need to be flagged
                 self.node12ok = 5  # self.node12ok = 5: there's a turn block between node1 and node3
-                print("Turn block between ", (self.node01, self.node02))
+                #print("Turn block between ", (self.node01, self.node02))
             elif type_error == "Turn block2":
                 self.node12ok = 5  # self.node12ok = 5: there's a turn block between node1 and node3
-                print("Turn block between ", (self.node01, self.node02))
+                #print("Turn block between ", (self.node01, self.node02))
         else:
             if route_of_this_node != route_of_next_node:  # otherwise there is no need to search a path between node 1 and 2
                 self.node12ok = 1
@@ -57,14 +57,14 @@ class CheckNodePairOk:
                             if not ((self.node01, self.node02) in nodes_check):
                                 self.node12ok = 1 # there's a fine link between node1 and node2
                             else:
-                                print("The network suggests a fine link but the error message notes an error between ", (self.node01, self.node02))
+                                #print("The network suggests a fine link but the error message notes an error between ", (self.node01, self.node02))
                                 self.node12ok = 6 # there's a link between node1 and node2, and they are in node12ok list, but the error type is not what I've seen before
 
                 if self.node12ok == 999:
                     self.node12ok = 7 #problematic link between node1 and node2 (or close to bus sys)
-                    print("Problematic link (for bus) between ", (self.node01, self.node02))
-                    if not ((self.node01, self.node02) in nodes_check):
-                        print("The network suggests a problematic link but the error message doesn't note errors between ", (self.node01, self.node02))
+                    #print("Problematic link (for bus) between ", (self.node01, self.node02))
+                    #if not ((self.node01, self.node02) in nodes_check):
+                        #print("The network suggests a problematic link but the error message doesn't note errors between ", (self.node01, self.node02))
         return self.node12ok
 
     def get_nodes_errorturn(

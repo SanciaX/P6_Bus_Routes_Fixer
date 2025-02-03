@@ -30,7 +30,7 @@ class RouteNodes:
                 if self.word3 in line:
                     start_line_index = True
 
-    def read_route_file_from_mod(self, error_node_list_class, node_stop_list_class):
+    def add_route_items_from_mod(self, error_node_list_class, node_stop_list_class):
         with open(self.error_modification, "r") as fp:
             lines = fp.readlines()
             start_table_index = False
@@ -39,15 +39,36 @@ class RouteNodes:
             for line in lines:
                 if '* Table: Line route items (Element inserted)' in line:
                     start_table_index = True
-                if self.word4 in line and start_table_index:
+                elif '* Table' in line and start_table_index:
                     break
                 if start_table_index:
                     if "B;" in line:
                         node_stop = line.split(";")[3:5]
                         node_stop_list_class.get_node_stop(node_stop, current_route)
                         node_num = line.split(";")[3]
-                        current_route = line.split(";")[1] + ' recognized from the errorneous modification'
-                        if node_num.isdigit() and current_route == last_route:
+                        current_route = line.split(";")[1] + ' nodes to insert from the route, recognized from the erroneous modification'
+                        if node_num.isdigit():
+                            # and current_route == last_route:
                             error_node_list_class.get_error_nodes(node_num, current_route)
                         last_route = current_route
 
+    def delete_route_items_from_mod(self, error_node_list_class, node_stop_list_class):
+        with open(self.error_modification, "r") as fp:
+            lines = fp.readlines()
+            start_table_index = False
+            current_route = "0 "
+            last_route = "0 "
+            for line in lines:
+                if '* Table: Line route items (Element deleted)' in line:
+                    start_table_index = True
+                elif '* Table' in line and start_table_index:
+                    break
+                if start_table_index:
+                    if "B;" in line:
+                        node_stop = line.split(";")[3:5]
+                        node_stop_list_class.get_node_stop(node_stop, current_route)
+                        node_num = line.split(";")[3]
+                        current_route = line.split(";")[1] + ' nodes to delete from the route, recognized from the erroneous modification'
+                        if node_num.isdigit(): #and current_route == last_route:
+                            error_node_list_class.get_error_nodes(node_num, current_route)
+                        last_route = current_route
