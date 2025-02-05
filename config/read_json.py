@@ -23,6 +23,9 @@ scenario_management_path = Path(directories['scenario_management_path'])
 modifications_path = scenario_management_path / directories['modifications_path']
 scenarios_path = scenario_management_path / directories['scenarios_path']
 
+# Create the bus_routes_fix_path if it does not exist
+Path(bus_routes_fix_path).mkdir(exist_ok=True, parents=True)
+
 # Define IDs
 error_scenario_id = directories['error_scenario_id']
 # working_scenario_id = directories['working_scenario_id']

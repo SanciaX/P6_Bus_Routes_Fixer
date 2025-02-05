@@ -51,18 +51,32 @@ This repository contains Python scripts designed to fix bus routes in Visum Scen
 - Open the `config/directories.json` file and specify the path of your scenario management (scenario_management_path), the ID of the scenario with route error(s) (scenario_management_path), and the ID of the modification causing the error (error_modification_id).
 - Run the `run_me.py` script (as Admin).
 
-```bash
-```python
-
 ## Requirements
 
 - Python 3.9 or later
 - PTV Visum 2024/2025
-- Your Scenario Management projects, or download the example model from [PCAM/P6 Tool/Eaxample_Model_Scenario](https://transportforlondon.sharepoint.com/:f:/r/sites/one-pcam/Shared%20Documents/P6%20Tool/Eaxample%20Model_Scenario%20Management%20Bus%20Routes?csf=1&web=1&e=4ZptbN)
+- Your Scenario Management projects, or download the example model from [PCAM/P6 Tool/Example_Model_Scenario](https://transportforlondon.sharepoint.com/:f:/r/sites/one-pcam/Shared%20Documents/P6%20Tool/Eaxample%20Model_Scenario%20Management%20Bus%20Routes?csf=1&web=1&e=4ZptbN)
 
 ### Python Modules
 
 Install the required Python modules using `pip`:
 
 ```bash
+# create venv
+cd \venvs\directory
+python -m venv p6_fix_bus_routes
+
+# activate venv
+activate Scripts\activate.bat
+
+# clone the repo
+cd \git\repos\directory
+git clone https://github.com/SanciaX/P6_Fix_Bus_Routes.git
+cd P6_Fix_Bus_Routes
+
+# install requirements
 pip install -r requirements.txt
+
+# run the main script
+python run_me.py
+```
