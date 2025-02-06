@@ -1,7 +1,5 @@
 ########################################################
 ## Section 2.8: Fix bus route in the transfer file
-from itertools import filterfalse
-from turtle import TurtleGraphicsError
 
 
 class FixBusRoute:
@@ -23,7 +21,7 @@ class FixBusRoute:
                     fw.write(line)
 
 
-## Change routeAddedTransferTemp.tra
+        ## Change routeAddedTransferTemp.tra
         # create index from error_modification for adding/deleting lines in routeAddedTransferTemp.tra
         # '* Table: Line route items (Element deleted)
         elements_delete =[]
@@ -486,4 +484,3 @@ class FixBusRoute:
                         fw.writelines(line)
                 elif change_start == False and change_firstline == False:
                     fw.writelines(line)
-
