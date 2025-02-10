@@ -2,8 +2,9 @@
 
 import shutil
 import win32com.client
-from config.read_json import *
-def visum_path_search(c, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check,network_file_table_of_links,network_file_table_of_turns, check_node_pair_ok_class):
+
+
+def visum_path_search(c, working_scenario_delete_routes_name, error_modification, error_scenario_network_file_name, node_links, error_route_list, route_added_transfer_file_start, route_added_transfer_file_temp, fix_bus_route_class, route_added_transfer_file_final, modification_check,network_file_table_of_links,network_file_table_of_turns, check_node_pair_ok_class, processed_error_mod_transfer_file, working_scenario_load_error_mod, error_mod_transfer_file, working_scenario_routes_fixed_name, routes_fixed_transfer_file):
 
     # Add the route items info. from the erroneous modification to route_added_transfer_file_start and save the node and turn pairs to check between which nodes there should be a shortest path search
     shutil.copy2(

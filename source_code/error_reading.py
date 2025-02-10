@@ -81,10 +81,11 @@ class ErrorNodes:
                 direction = line[semi_colon_index + 1:semi_colon_index + 2]
                 error_route_list_class.get_error_route(counter1, bus_route_number, bus_route_dir, direction)
                 counter1 += 1
-            if  '%'  in line:
+            if '%' in line:
                 self.error_route_mojibake = line.split(';')[1]
                 print('Cannot identify problematic nodes, links or turns along the following route:', line)
                 #THE ABOVE CODES CAN BE SHORTENED...
+
     def get_route_mojibake(self):
         return self.error_route_mojibake
 

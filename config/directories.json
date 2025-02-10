@@ -3,8 +3,8 @@
   "bus_routes_fix_path": "Bus_Routes_Fix",
   "error_modification_id": "006",
   "error_scenario_id": "009",
-  "modifications_path": "Modifications",
-  "scenario_management_path": "C:/Users/Shanshan Xie/TfL/06 Scenario management/01_Bus_Route_Script_Test_Subnetwork",
-  "scenarios_path": "Scenarios",
+  "scenario_management_base_path": "D:/tfl/P6/01_Bus_Route_Script_Test_Subnetwork",
+  "scenario_management_project_path": "D:/tfl/P6/01_Bus_Route_Script_Test_Subnetwork/Bus_Route_Script_Test_Subnetwork.vpdbx",
+  "visum_version": 25,
   "_note": "Please specify scenario_management_path, error_modification_id & error_scenario_id."
 }

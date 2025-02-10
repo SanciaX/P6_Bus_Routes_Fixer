@@ -1,6 +1,6 @@
 # source_code/get_node12ok_list.py
 
-def get_node12ok_list(error_route_mojibake, routenodes, errornodelist, errornodestoplist, modificationchecklist,  route_added_transfer_file_start, error_scenario_network_file_name, network_file_table_of_links, network_file_table_of_turns, error_modification, error_nodes_check, error_nodes_type_check, check_node_pair_ok_class):
+def get_node12ok_list(error_route_mojibake, routenodes, errornodelist, errornodestoplist, modificationchecklist, route_added_transfer_file_start, error_scenario_network_file_name, network_file_table_of_links, network_file_table_of_turns, error_modification, error_nodes_check, error_nodes_type_check, check_node_pair_ok_class):
     route_node_class = routenodes(route_added_transfer_file_start, error_modification)  # read from route_added_transfer_file_start
     #route_node_deleted_class = routenodes(route_added_transfer_file_start, error_modification) # the nodes list from the erroneous modification's Table: Line route items (Element deleted)
     #route_node_added_class = routenodes(route_added_transfer_file_start, error_modification) # the nodes list from the erroneous modification's Table: Line route items (Element inserted)

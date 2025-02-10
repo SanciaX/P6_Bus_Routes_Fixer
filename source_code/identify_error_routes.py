@@ -1,9 +1,9 @@
-from source_code.node_checklist import NodeCheckList
-from source_code.error_reading import ErrorNodes, ModificationCheckList
-from source_code.route_nodes import RouteNodes
-from source_code.error_node_stop_route_lists import ErrorNodeStopList, ErrorNodeList, ErrorRouteList
-from source_code.check_node12_ok import CheckNodePairOk
-from source_code.fix_bus_route import FixBusRoute
+from node_checklist import NodeCheckList
+from error_reading import ErrorNodes, ModificationCheckList
+from route_nodes import RouteNodes
+from error_node_stop_route_lists import ErrorNodeStopList, ErrorNodeList, ErrorRouteList
+from check_node12_ok import CheckNodePairOk
+from fix_bus_route import FixBusRoute
 
 def identify_errors(error_message_file, network_file_table_of_links, network_file_table_of_turns):
     error_nodes_class = ErrorNodes(error_message_file)  # read error message

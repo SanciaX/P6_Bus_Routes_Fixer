@@ -78,5 +78,5 @@ cd P6_Fix_Bus_Routes
 pip install -r requirements.txt
 
 # run the main script
-python run_me.py
+python bus_routes_fixer.py
 ```
