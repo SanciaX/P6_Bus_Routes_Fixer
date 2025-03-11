@@ -1,54 +1,62 @@
 """
 This file contains functions to fix routes in Visum
 """
+import logging
 
-def find_error_links(routes_dict, visum1):
-    links_on_error_route = []
+def find_error_links(error_routes_dict, visum1):
+    """
+    Use the network of the error scenario to find problematic link(s) along error route(s)
+    """
     nodes = []
-    stops = []
-    for route_id, route_info in routes_dict.items():
+    for route_name, route_info in error_routes_dict.items():
         nodes = route_info.get('nodes', [])
-        stops = route_info.get('stops', [])
         nodes_filtered = [node for node in nodes if node != ' ']
 
         # check links
-        links_ok = []
+        node_pair_checklist = {} # key: (node1, node2), value: True (fine link between node1 and 2)/False (error link between node1 and 2))
         for i in range(len(nodes_filtered) - 1):
             link_ok = _check_link(visum1, nodes_filtered[i], nodes_filtered[i + 1])
             if not link_ok:
-                print(f"Link Error in Route {route_id} between {nodes_filtered[i]} and {nodes_filtered[i + 1]}")
-            links_ok.append([nodes_filtered[i], nodes_filtered[i + 1], link_ok])
+                print(f"Link Error in Route {route_name} between {nodes_filtered[i]} and {nodes_filtered[i + 1]}")
+                logging.info(f"Link Error in Route {route_name} between {nodes_filtered[i]} and {nodes_filtered[i + 1]}")
+            node_pair_checklist[(nodes_filtered[i], nodes_filtered[i + 1])] = link_ok
 
         # check turns
         turns_ok = []
         for i in range(len(nodes_filtered) - 2):
             turn_ok = _check_turn(visum1, nodes_filtered[i], nodes_filtered[i + 1], nodes_filtered[i + 2])
             if not turn_ok:
-                print(f"Turn Error in Route {route_id} from {nodes_filtered[i]} via {nodes_filtered[i + 1]} to {nodes_filtered[i + 2]}")
+                print(f"Turn Error in Route {route_name} from {nodes_filtered[i]} via {nodes_filtered[i + 1]} to {nodes_filtered[i + 2]}")
+                logging.info(f"Turn Error in Route {route_name} from {nodes_filtered[i]} via {nodes_filtered[i + 1]} to {nodes_filtered[i + 2]}")
             turns_ok.append([nodes_filtered[i], nodes_filtered[i + 1], nodes_filtered[i + 2], turn_ok])
 
-            # Update links_ok based on turns_ok
+            # Update node_pair_checklist based on turns_ok
             for t in range(len(turns_ok)):
                 if not turns_ok[t][3]:
-                    links_ok[t][2] = False
-                    links_ok[t + 1][2] = False
-        links_on_error_route.append([route_id, links_ok])
+                    node_pair_checklist[(turns_ok[t][0], turns_ok[t][1])] = False
+                    node_pair_checklist[(turns_ok[t][1], turns_ok[t][2])] = False
+        error_routes_dict[route_name]['link_check'] = node_pair_checklist
+        # by now, error_routes_dict's key: route_name, value: {'nodes': nodes, 'stops': stops, 'direction_code': direction_code, 'link_check': node_pair_checklist}
 
-    return links_on_error_route, nodes, stops
+    return error_routes_dict
 
-# Add fixed routes back
-def add_routes_back(links_on_error_route, visum3, error_route_instances, nodes, stops, config):
+
+def add_routes_back(error_routes_dict, visum3, config):
+    """
+    Add fixed routes back
+    """
     visum3.LoadVersion(config.error_scenario_fixing_routes_path) # scenarioErrorFixing.ver is the same as scenarioError.ver, but will have fixed routes added back later
-    all_messages = ""
-    # For each error route
-    for i in range(len(links_on_error_route)):
-        route, links_ok = links_on_error_route[i]
-        route_instance = error_route_instances[i]
 
-        # For each error route, find the start and end node so that the routeitems in between will not be included when adding back new route in the next step
-        start_index, end_index, search_start, search_end, all_messages = _find_start_end_nodes(links_ok, nodes, stops, route, all_messages)
-        all_messages = _add_one_route_back(start_index, end_index, visum3, route_instance,
-                                                                all_messages)
+    # For each error route
+    for route_name in error_routes_dict:
+        route_info = error_routes_dict[route_name]
+
+        # For each error route, find the start and end node so that the routeitems in between will not be included when adding back this route in the next step
+        start_index, end_index = _find_start_end_nodes(route_info, route_name)
+
+        # Add the fixed route back, ignoring the routeitems in between the start_index and end_index
+        _add_one_route_back(route_name, error_routes_dict, start_index, end_index, visum3)
+
     # Save the transfer file of adding fixed routes back
     visum3.SaveVersion(config.error_scenario_fixing_routes_path)
     visum3.GenerateModelTransferFileBetweenVersionFiles(
@@ -60,7 +68,7 @@ def add_routes_back(links_on_error_route, visum3, error_route_instances, nodes, 
         NonEmptyTablesOnly=True,
         WriteLayoutIntoModelTransferFile=True,
     )
-    return all_messages
+
 
 # Internal functions
 def _check_link(visum1, node1, node2):
@@ -80,53 +88,59 @@ def _check_turn(visum1, node1, node2, node3):
             return True
     return False
 
-def _find_start_end_nodes(links_ok, nodes, stops, route, all_messages):
+def _find_start_end_nodes(route_info, route_name):
+    nodes = route_info['nodes'] # including ' ', i.e. where the routeitem is a stop instead of a node
+    stops = route_info['stops'] # including ' ', i.e. where the routeitem is a node instead of a stop
+    node_pair_checklist = route_info['link_check']
     n_found = False
-    node_before_errors = None
-    node_after_errors = None
-    for i in range(len(links_ok)):
-        if not links_ok[i][2] and not n_found: # links_ok[i][2] of an error link is False
+    node_before_first_error = None
+    node_after_last_error = None
+    node_pair_check_list = list(node_pair_checklist.items())
+    for i in range(len(node_pair_check_list)):
+        if not node_pair_check_list[i][1] and not n_found: #  the link in between the node_pair is erroneous
             n_found = True
-            node_before_errors = links_ok[i][0]
+            node_before_first_error = node_pair_check_list[i][0][0] #node1 in node_pair
             break
-    for i in range(len(links_ok) - 1, -1, -1):
-        if not links_ok[i][2]:
-            node_after_errors = links_ok[i + 1][0]
+    for i in range(len(node_pair_check_list) - 1, -1, -1): #search reversely from the last node along this route
+        if not node_pair_check_list[i][1]: # the link in between the node_pair is erroneous
+            node_after_last_error = node_pair_check_list[i][0][1] #node2 in node_pair
             break
-    if not node_before_errors and not node_after_errors:
-        node_before_errors = links_ok[0][1]
-        node_after_errors = links_ok[1][1]
-    if node_before_errors and not node_after_errors:
-        node_after_errors = links_ok[-1][1]
-    node_before_errors_idx = nodes.index(node_before_errors)
-    node_after_errors_idx = nodes.index(node_after_errors)
-    search_start = nodes[0]
-    search_end = nodes[-1]
-    for i in range(node_before_errors_idx - 1, -1, -1):
-        if stops[i] != ' ':  # if the route_item is a stop
-            search_start = nodes[
-                (i + 1)]  # search start from the node after the last stop which is before link/turn error(s)
-            break
-    for i in range(node_after_errors_idx + 1, len(nodes)):
-        if stops[i] != ' ':  # if the route_item is a stop:
-            search_end = nodes[
-                (i - 1)]  # search ends at the node before the next stop which is after link/turn error(s)
-            break
-    start_index = nodes.index(search_start)
-    end_index = nodes.index(search_end)
-    message = f"check the route between {search_start} and {search_end} for Route {route}."
-    all_messages += message + "\n"
-    return start_index, end_index, search_start, search_end, all_messages
+
+    if not node_before_first_error: # if no error found
+        start_index = None
+        end_index = None
+
+    if node_before_first_error:
+        if not node_after_last_error: # if the last link along the route has problem, using the last node as the end node of searching
+            node_after_last_error = node_pair_check_list[-1][1]
+        node_before_first_error_idx = nodes.index(node_before_first_error) # index of the node before the first error along the route
+        node_after_last_error_idx = nodes.index(node_after_last_error)
+        search_start_node = nodes[0] #default: search from the 1st node
+        search_end_node = nodes[-1] #default: search end at the last node
+        # if start_index:
+        for i in range(node_before_first_error_idx - 1, -1, -1):
+            if stops[i] != ' ':  # if the route_item is a stop
+                search_start_node = nodes[
+                    (i + 1)]  # search start from the node after the last stop which is before link/turn error(s)
+                break
+        for i in range(node_after_last_error_idx + 1, len(nodes)):
+            if stops[i] != ' ':  # if the route_item is a stop:
+                search_end_node = nodes[
+                    (i - 1)]  # search ends at the node before the next stop which is after link/turn error(s)
+                break
+        start_index = nodes.index(search_start_node)
+        end_index = nodes.index(search_end_node)
+        logging.info(f"check the route between {search_start_node} and {search_end_node} for Route {route_name}.")
+    return start_index, end_index
 
             
-def _add_one_route_back(start_index, end_index, visum3, route_instance, all_messages):
+def _add_one_route_back(route_name, error_routes_dict, start_index, end_index, visum3):
     try:
-        name = route_instance.AttValue("NAME")
-        line = visum3.Net.Lines.ItemByKey(name.split(' ')[0])
-        direction = visum3.Net.Directions.GetAll[0]
+        line = visum3.Net.Lines.ItemByKey(route_name.split(' ')[0])
+        direction_code = visum3.Net.Directions.GetAll[0]
         for dirTo in visum3.Net.Directions.GetAll:
-            if dirTo.AttValue("CODE") == route_instance.AttValue("DIRECTIONCODE"):
-                direction = dirTo
+            if dirTo.AttValue("CODE") == error_routes_dict[route_name]['direction_code']:
+                direction_code = dirTo
         paraR1 = visum3.IO.CreateNetReadRouteSearchTSys()  # create the parameter object
         paraR1.SetAttValue("HowToHandleIncompleteRoute", 2)  # search the shortest path if line route has gaps
         paraR1.SetAttValue("ShortestPathCriterion", 3)  # 3:Link length; 0 Direct distance ; 1 Link travel time of current transport system; 2 Link type travel time of current transport system
@@ -136,21 +150,23 @@ def _add_one_route_back(start_index, end_index, visum3, route_instance, all_mess
         paraR1.SetAttValue("WhatToDoIfShortestPathNotFound", 0)  # 0 Do not read ; 2 Insert link if necessary ; 1 Open link or turn for transport system
 
         route_items= visum3.CreateNetElements()
-        items = route_instance.LineRouteItems.GetAll[:(start_index+1)] + route_instance.LineRouteItems.GetAll[end_index:]
-        for item in items:
-            stoppoint = item.AttValue("STOPPOINTNO")
-            node = item.AttValue("NODENO")
-            if stoppoint:
-                stop = visum3.Net.StopPoints.ItemByKey(stoppoint)
+        if start_index != None:
+            nodes = error_routes_dict[route_name]['nodes'][:(start_index+1)]+ error_routes_dict[route_name]['nodes'][end_index:]
+            stops = error_routes_dict[route_name]['stops'][:(start_index+1)]+ error_routes_dict[route_name]['stops'][end_index:]
+        else:
+            nodes = error_routes_dict[route_name]['nodes']
+            stops = error_routes_dict[route_name]['stops']
+        for i in range(len(nodes)):
+            if stops[i] != ' ':
+                stop = visum3.Net.StopPoints.ItemByKey(int(stops[i]))
                 route_items.Add(stop)
             else:
-                node = visum3.Net.Nodes.ItemByKey(node)
+                node = visum3.Net.Nodes.ItemByKey(int(nodes[i]))
                 route_items.Add(node)
-        visum3.Net.AddLineRoute(name, line, direction, route_items, paraR1)
-        ##### NEED TO ADD TIME PROFILE
+
+        visum3.Net.AddLineRoute(route_name, line, direction_code, route_items, paraR1)
 
     except Exception:
-        message = f"Not be able to generate a fixed route."
-        all_messages += message + "\n"
-    return all_messages
+        logging.info(f"Not be able to generate a fixed route for route {route_name}.")
+
 

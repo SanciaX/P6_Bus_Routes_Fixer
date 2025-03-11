@@ -4,9 +4,9 @@ This file contains the function that saves the fixed modifications and the fixed
 
 from visum_sm_functions import add_scenario, add_modification
 import shutil
+import logging
 
-
-def save_to_sm(this_project, config, new_mode_set, visum1, all_messages):
+def save_to_sm(this_project, config, new_mode_set, visum1):
 
     # generate a modification that deletes the problematic routes
     code = "Delete Problematic Routes for Scenario " + config.error_scenario_id_str
@@ -30,11 +30,8 @@ def save_to_sm(this_project, config, new_mode_set, visum1, all_messages):
         mode_set_str += mod + ","
     final_mod_set = mode_set_str  + str(mode2_id) + "," + str(mode3_id) + "," + str(mode4_id)
     print("The scenario fixed has the following modifications: ", final_mod_set)
-    message = "The scenario fixed has the following modifications: " + final_mod_set
-    all_messages += message + "\n"
+    logging.info("The scenario fixed has the following modifications: " + final_mod_set)
     code = "Bus Route Fixed for Scenario " + config.error_scenario_id_str
     cur_scenario = add_scenario(visum1, this_project, final_mod_set, config.scenarios_path,code)
     cur_scenario.LoadInput()
     this_project.RemoveScenario(cur_scenario.AttValue("NO")-1)
-
-    return all_messages

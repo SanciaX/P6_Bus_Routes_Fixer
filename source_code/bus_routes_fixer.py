@@ -16,11 +16,10 @@ import win32com.client
 ###### PREPARATIONS:
 # Import User's Inputs
 from directory_config import config
-from pop_up_messages import pop_up_messages
 from fix_routes_functions import find_error_links, add_routes_back
 from save_to_sm import save_to_sm
 from logger_configuration import setup_logger
-from identify_error_functions import read_scenario_management, save_error_routes_n_error_scenario, save_routes_deleting_ver
+from identify_error_functions import read_scenario_management, save_error_routes, save_fixed_error_modification, save_the_routes_deleting_ver
 
 
 
@@ -64,17 +63,14 @@ class BusRoutesFixer:
         self.visum1 = self.visum_connector1.connect()  # visum1 is linked to the scenario management project
         self.sm_project = self.visum1.ScenarioManagement.OpenProject(self.config.scenario_management_path)
         self.com_constants = win32com.client.constants
-        self.routes_dict = None
-        self.error_route_instances = None
+        self.error_routes_dict = None
         self.node_chains = None
-        self.all_messages = None
 
     def run_fixer(self):
         try:
             self._read_scenario_management()
             self._fix_errors()
             self._save_to_sm()
-            self._pop_up_messages()
 
         except Exception as e:
             self.logger.error(f"An error occurred during the fixing process: {e}", exc_info=True)
@@ -86,32 +82,30 @@ class BusRoutesFixer:
         self.new_mode_set = read_scenario_management(self.visum1, self.sm_project, self.config)
 
         # Save route items along the error routes in the network before loading the error modification
-        # And make a copy of the error scenario model ('scenarioError.ver')  with error routes deleted
         self.visum_connector2 = VisumConnector(self.config.visum_version)
         self.visum2 = self.visum_connector2.connect() # visum2 is linked to scenarioWorking.ver
-        self.routes_dict, self.error_route_instances = save_error_routes_n_error_scenario(self.visum1, self.visum2, self.config) # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
+        self.error_routes_dict = save_error_routes(self.visum1, self.visum2, self.config) # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
 
-        # Save the transfer file that deletes routes from the working scenario (routeDeletedTransfer.tra)
-        # And apply routeDeletedTransfer.tra to a new modification in scenario management
-        save_routes_deleting_ver(self.visum1, self.sm_project, self.config)
+        # Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
+        # This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
+        save_fixed_error_modification(self.visum1, self.config)
+
+        # Save the transfer file that deletes routes from the working scenario (routeDeletedTransfer.tra) and apply it to a new modification in scenario management
+        save_the_routes_deleting_ver(self.visum1, self.sm_project, self.config)
 
     def _fix_errors(self):
-        # Use the network of the error scenario to find errors and search the shortest path
         self.visum_connector3 = VisumConnector(self.config.visum_version)
         self.visum3 = self.visum_connector3.connect() # visum3 is linked to scenarioError.ver
 
-        # Find problematic link(s) along error route(s)
-        links_on_error_route, nodes, stops = find_error_links(self.routes_dict, self.visum1)
+        # Use the network of the error scenario to find problematic link(s) along error route(s)
+        self.error_routes_dict = find_error_links(self.error_routes_dict, self.visum1)
 
         # Generate the transfer file that adds the fixed routes back
-        self.all_messages = add_routes_back(links_on_error_route, self.visum3, self.error_route_instances, nodes, stops, self.config)
+        add_routes_back(self.error_routes_dict, self.visum3, self.config)
 
 
     def _save_to_sm(self):
-        self.all_messages = save_to_sm(self.sm_project, self.config, self.new_mode_set, self.visum1, self.all_messages)
-
-    def _pop_up_messages(self):
-        pop_up_messages(self.all_messages)
+        save_to_sm(self.sm_project, self.config, self.new_mode_set, self.visum1)
 
     def close(self):
         """Closes Visum connections."""

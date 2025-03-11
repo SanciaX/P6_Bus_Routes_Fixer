@@ -48,3 +48,26 @@ def apply_model_transfer(visum, tra_path):
 
     anrController.SetConflictAvoidingForAll(10000, "ORG_")
     visum.ApplyModelTransferFile(tra_path, anrController)
+
+def get_route_items(route_name,visum):
+    """Retrieves nodes and stops."""
+    lineroute = None
+    nodes = []
+    stops = []
+    try:
+        for r in visum.Net.LineRoutes.GetAll:
+            if r.AttValue("NAME") == route_name:
+                lineroute = r
+        for item in lineroute.LineRouteItems.GetAll:
+            if not item.AttValue("STOPPOINTNO") and item.AttValue("NODENO"):
+                stops.append(' ')
+                nodes.append(str(int(item.AttValue("NODENO"))))
+            elif item.AttValue("STOPPOINTNO") and not item.AttValue("NODENO"):
+                stops.append(str(int(item.AttValue("STOPPOINTNO"))))
+                nodes.append(' ')
+        if lineroute is None:
+            print(f"Error retrieving route items for {route_name}")
+    except Exception:
+        pass
+
+    return nodes, stops
