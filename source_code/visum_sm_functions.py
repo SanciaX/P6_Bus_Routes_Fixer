@@ -2,6 +2,7 @@
 This module contains functions to interact with PTV Visum Scenario Management.
 """
 import win32com.client
+import logging
 
 def add_scenario(visum, project, modifications, scenarios_path, code):
     new_scenario = project.AddScenario()
@@ -66,7 +67,7 @@ def get_route_items(route_name,visum):
                 stops.append(str(int(item.AttValue("STOPPOINTNO"))))
                 nodes.append(' ')
         if lineroute is None:
-            print(f"Error retrieving route items for {route_name}")
+            logging.error(f"Error retrieving route items for {route_name}")
     except Exception:
         pass
 

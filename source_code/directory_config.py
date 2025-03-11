@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+import logging
 
 class DirectoryConfig:
     _instance = None  # Singleton pattern to ensure only one instance is created
@@ -18,12 +19,13 @@ class DirectoryConfig:
     def _initialize(self, config_path=None):
         # Get the current working directory
         current_path = Path(self.WORKING_DIRECTORY)
-        print(f"The current working directory is: {current_path}")
+        logging.info(f"The current working directory is: {current_path}")
+
         if not config_path:
             config_path = self.DEFAULT_CONFIG_PATH
         # Construct the path to the directories.json file
         self.json_path_path = current_path / config_path
-        print(f"The JSON file path is: {self.json_path_path}")
+        logging.info(f"The JSON file path is: {self.json_path_path}")
 
         # Check if the file exists
         if not self.json_path_path.exists():
@@ -82,6 +84,5 @@ class DirectoryConfig:
         return ''.join(mod_path_list)
 
 
-# Define configuration instance:
-config = DirectoryConfig()  # Creates and loads the configuration
+
 
