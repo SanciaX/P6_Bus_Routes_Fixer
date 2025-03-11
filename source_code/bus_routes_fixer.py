@@ -68,7 +68,7 @@ class BusRoutesFixer:
 
     def run_fixer(self):
         try:
-            self._read_scenario_management()
+            self._identify_errors()
             self._fix_errors()
             self._save_to_sm()
 
@@ -77,7 +77,7 @@ class BusRoutesFixer:
         finally:
             self.close()
 
-    def _read_scenario_management(self):
+    def _identify_errors(self):
         # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
         self.new_mode_set = read_scenario_management(self.visum1, self.sm_project, self.config)
 
