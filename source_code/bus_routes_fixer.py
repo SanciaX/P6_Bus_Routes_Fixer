@@ -94,7 +94,7 @@ class BusRoutesFixer:
             self.route_fixer.find_error_links(self.error_identifier.error_routes_dict, self.visum1)
 
             # Generate the transfer file that adds the fixed routes back
-            self.route_fixer.add_routes_back(self.route_fixer.error_routes_dict, self.visum3, self.config)
+            self.route_fixer.add_routes_back(self.visum3, self.config)
             
             ###### SAVE TO SCENARIO MANAGEMENT:
             self.scenario_generator.save_to_sm(self.sm_project, self.config, self.error_identifier.working_scenario_modification_set, self.visum1)

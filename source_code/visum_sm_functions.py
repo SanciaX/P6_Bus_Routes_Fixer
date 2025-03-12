@@ -16,7 +16,7 @@ def add_scenario(visum, project, modifications, scenarios_path, code):
     return new_scenario
 
 
-def add_modification(project,config, code, description):
+def add_modification(project, config, code, description):
     new_modification = project.AddModification()
     new_modification.SetAttValue("Code", code)
     new_modification.SetAttValue(

@@ -7,12 +7,13 @@ class RouteFixer:
     def __init__(self):
         self.error_routes_dict = None
 
-    def find_error_links(self, error_routes_dict, visum1):
+    def find_error_links(self, error_identifier_error_routes_dict, visum1):
         """
         Use the network of the error scenario to find problematic link(s) along error route(s)
         """
+        self.error_routes_dict = error_identifier_error_routes_dict
         nodes = []
-        for route_name, route_info in error_routes_dict.items():
+        for route_name, route_info in self.error_routes_dict.items():
             nodes = route_info.get('nodes', [])
             nodes_filtered = [node for node in nodes if node != ' ']
 
@@ -37,26 +38,26 @@ class RouteFixer:
                     if not turns_ok[t][3]:
                         node_pair_checklist[(turns_ok[t][0], turns_ok[t][1])] = False
                         node_pair_checklist[(turns_ok[t][1], turns_ok[t][2])] = False
-            error_routes_dict[route_name]['link_check'] = node_pair_checklist
-            # by now, error_routes_dict's key: route_name, value: {'nodes': nodes, 'stops': stops, 'direction_code': direction_code, 'link_check': node_pair_checklist}
+            self.error_routes_dict[route_name]['link_check'] = node_pair_checklist
+            # by now, self.error_routes_dict's key: route_name, value: {'nodes': nodes, 'stops': stops, 'direction_code': direction_code, 'link_check': node_pair_checklist}
 
-        self.error_routes_dict = error_routes_dict
 
-    def add_routes_back(self, error_routes_dict, visum3, config):
+
+    def add_routes_back(self, visum3, config):
         """
         Add fixed routes back
         """
         visum3.LoadVersion(config.error_scenario_fixing_routes_path) # scenarioErrorFixing.ver is the same as scenarioError.ver, but will have fixed routes added back later
 
         # For each error route
-        for route_name in error_routes_dict:
-            route_info = error_routes_dict[route_name]
+        for route_name in self.error_routes_dict:
+            route_info = self.error_routes_dict[route_name]
 
             # For each error route, find the start and end node so that the routeitems in between will not be included when adding back this route in the next step
             start_index, end_index = self._find_start_end_nodes(route_info, route_name)
 
             # Add the fixed route back, ignoring the routeitems in between the start_index and end_index
-            self._add_one_route_back(route_name, error_routes_dict, start_index, end_index, visum3)
+            self._add_one_route_back(route_name, start_index, end_index, visum3)
 
         # Save the transfer file of adding fixed routes back
         visum3.SaveVersion(config.error_scenario_fixing_routes_path)
@@ -137,12 +138,12 @@ class RouteFixer:
         return start_index, end_index
 
 
-    def _add_one_route_back(self, route_name, error_routes_dict, start_index, end_index, visum3):
+    def _add_one_route_back(self, route_name, start_index, end_index, visum3):
         try:
             line = visum3.Net.Lines.ItemByKey(route_name.split(' ')[0])
             direction_code = visum3.Net.Directions.GetAll[0]
             for dirTo in visum3.Net.Directions.GetAll:
-                if dirTo.AttValue("CODE") == error_routes_dict[route_name]['direction_code']:
+                if dirTo.AttValue("CODE") == self.error_routes_dict[route_name]['direction_code']:
                     direction_code = dirTo
             paraR1 = visum3.IO.CreateNetReadRouteSearchTSys()  # create the parameter object
             paraR1.SetAttValue("HowToHandleIncompleteRoute", 2)  # search the shortest path if line route has gaps
@@ -157,13 +158,13 @@ class RouteFixer:
 
             route_items = visum3.CreateNetElements()
             if start_index != None:
-                nodes = error_routes_dict[route_name]['nodes'][:(start_index + 1)] + error_routes_dict[route_name]['nodes'][
+                nodes = self.error_routes_dict[route_name]['nodes'][:(start_index + 1)] + self.error_routes_dict[route_name]['nodes'][
                                                                                      end_index:]
-                stops = error_routes_dict[route_name]['stops'][:(start_index + 1)] + error_routes_dict[route_name]['stops'][
+                stops = self.error_routes_dict[route_name]['stops'][:(start_index + 1)] + self.error_routes_dict[route_name]['stops'][
                                                                                      end_index:]
             else:
-                nodes = error_routes_dict[route_name]['nodes']
-                stops = error_routes_dict[route_name]['stops']
+                nodes = self.error_routes_dict[route_name]['nodes']
+                stops = self.error_routes_dict[route_name]['stops']
             for i in range(len(nodes)):
                 if stops[i] != ' ':
                     stop = visum3.Net.StopPoints.ItemByKey(int(stops[i]))
