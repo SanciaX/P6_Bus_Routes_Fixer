@@ -5,14 +5,14 @@ RouteErrorIdentifier contains functions that help to identify error routes.
 import shutil
 import logging
 from visum_sm_functions import add_scenario, add_modification, apply_model_transfer, get_route_items
-
+from pathlib import Path
 
 class RouteErrorIdentifier:
     def __init__(self):
         self.working_scenario_modification_set = []
         self.error_routes_dict = {}
 
-    def read_scenario_management(self, visum, sm_project, config):
+    def read_scenario_management(self, visum, config):
         """
         Create a new scenario containing the modifications before the error occurs and save the .ver file
         """
@@ -28,14 +28,14 @@ class RouteErrorIdentifier:
                 self.working_scenario_modification_set.append(i)
         working_mod_set = ','.join(self.working_scenario_modification_set)
 
-        working_scenario = add_scenario(visum, sm_project, working_mod_set, config.scenarios_path,
+        working_scenario = add_scenario(visum, working_mod_set, config.scenarios_path,
                                         "Deselect the modification causing error")
         working_scenario.LoadInput()
         visum.SaveVersion(config.working_scenario_path)
         working_scenario.AttValue("NO")
 
 
-    def save_error_routes(self, visum1, visum2, config):
+    def save_error_routes(self, visum1, visum2, config, screenshot_taker):
         """
         Identify and remove erroneous routes which are recognised from the messages file.
         """
@@ -64,19 +64,20 @@ class RouteErrorIdentifier:
                         # Save delete_routes.ver and add_routes.ver
                         iLineRoute_to_delete = visum2.Net.LineRoutes.ItemByKey(line_name, direction_code, route_name)
                         route_to_remove = visum1.Net.LineRoutes.ItemByKey(line_name, direction_code, route_name)
+                        screenshot_taker.take_screenshot(visum1, route_to_remove, Path((config.screenshot_path) / f"{route_name}-pre-errors.png"), config.prior_error_gpa_path )
                         if iLineRoute_to_delete:
                             visum1.Net.RemoveLineRoute(route_to_remove)
                 except Exception:
                     continue
-
+        # Delete error routes from the network before loading the modification causing errors
+        visum1.SaveVersion(config.working_scenario_delete_routes_path)
 
     def save_fixed_error_modification(self, visum1, config):
         """
         Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
         """
-        # Delete error routes from the network before loading the modification causing errors
-        visum1.SaveVersion(config.working_scenario_delete_routes_path)
+
         # Apply the error modification with an anrController.SetWhatToDo parameter that ignore conflicting LineRouteItem data, so that when load ing the error modification, if the error modification contains data about routes just deleted, there wouldn't be error
         apply_model_transfer(visum1, config.error_modification)
         # Save the Error Scenario Model with the error routes deleted
@@ -98,7 +99,7 @@ class RouteErrorIdentifier:
             config.error_scenario_path, config.error_scenario_fixing_routes_path
         )  # error_scenario_path being the error scenario without error routes; error_scenario_fixing_routes_path being the scenario with fixed routes added back
 
-    def save_the_routes_deleting_ver(self, visum, this_project, config):
+    def save_the_routes_deleting_ver(self, visum, config):
         """
         Create a transfer file of deleting error routes
         """
@@ -111,10 +112,4 @@ class RouteErrorIdentifier:
             NonEmptyTablesOnly=True,
             WriteLayoutIntoModelTransferFile=True,
         )
-        # Create a new modification in Scenario Management which deletes error routes (i.e. apply routeDeletedTransfer.tra)
-        modification1, mod_delete_routes_path, mod_delete_routes_name, mod_delete_routes_id = add_modification(
-            this_project, config, "Erroneous Routes Deleted",
-            "Copied from the last working modification and have problematic routes deleted")
-        shutil.copy2(
-            config.route_deleted_transfer_path, mod_delete_routes_path
-        )
+

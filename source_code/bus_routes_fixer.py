@@ -20,6 +20,7 @@ from error_identifier import RouteErrorIdentifier
 from route_fixer import RouteFixer
 from senario_generator import ScenarioGenerator
 from logger_configuration import setup_logger
+from screenshot_taker import ScreenshotTaker
 
 logger = setup_logger()
 
@@ -67,6 +68,8 @@ class BusRoutesFixer:
         self.error_identifier = RouteErrorIdentifier()
         self.route_fixer = RouteFixer()
         self.scenario_generator = ScenarioGenerator()
+        self.screenshot_taker = ScreenshotTaker()
+
 
     def run_fixer(self):
         """Main function to identify and fix bus route errors."""
@@ -74,17 +77,15 @@ class BusRoutesFixer:
         try:
             ###### IDENTIFY ERRORS:
             # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
-            self.error_identifier.read_scenario_management(self.visum1, self.sm_project,
-                                                                               self.config)
+            self.error_identifier.read_scenario_management(self.visum1, self.config)
             # Save route items along the error routes in the network before loading the error modification
-            self.error_identifier.save_error_routes(self.visum1, self.visum2,
-                                                                             self.config)  # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
+            self.error_identifier.save_error_routes(self.visum1, self.visum2, self.config, self.screenshot_taker)  # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
             # Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
             # This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
             self.error_identifier.save_fixed_error_modification(self.visum1, self.config)
 
             # Save the transfer file that deletes routes from the working scenario (routeDeletedTransfer.tra) and apply it to a new modification in scenario management
-            self.error_identifier.save_the_routes_deleting_ver(self.visum1, self.sm_project, self.config)
+            self.error_identifier.save_the_routes_deleting_ver(self.visum1, self.config)
             
             ###### FIX ERRORS:
             self.visum_connector3 = VisumConnector(self.config.visum_version)
@@ -94,10 +95,10 @@ class BusRoutesFixer:
             self.route_fixer.find_error_links(self.error_identifier.error_routes_dict, self.visum1)
 
             # Generate the transfer file that adds the fixed routes back
-            self.route_fixer.add_routes_back(self.visum3, self.config)
+            self.route_fixer.add_routes_back(self.visum3, self.screenshot_taker, self.config)
             
             ###### SAVE TO SCENARIO MANAGEMENT:
-            self.scenario_generator.save_to_sm(self.sm_project, self.config, self.error_identifier.working_scenario_modification_set, self.visum1)
+            self.scenario_generator.save_to_sm(self.config, self.error_identifier.working_scenario_modification_set, self.visum1)
 
         except Exception as e:
             logger.error(f"An error occurred during the fixing process: {e}", exc_info=True)

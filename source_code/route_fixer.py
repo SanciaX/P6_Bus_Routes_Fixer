@@ -2,6 +2,7 @@
 This file contains functions to fix routes in Visum
 """
 import logging
+from pathlib import Path
 
 class RouteFixer:
     def __init__(self):
@@ -43,7 +44,7 @@ class RouteFixer:
 
 
 
-    def add_routes_back(self, visum3, config):
+    def add_routes_back(self, visum3, screenshot_taker, config):
         """
         Add fixed routes back
         """
@@ -57,7 +58,7 @@ class RouteFixer:
             start_index, end_index = self._find_start_end_nodes(route_info, route_name)
 
             # Add the fixed route back, ignoring the routeitems in between the start_index and end_index
-            self._add_one_route_back(route_name, start_index, end_index, visum3)
+            self._add_one_route_back(route_name, start_index, end_index, visum3, screenshot_taker, config)
 
         # Save the transfer file of adding fixed routes back
         visum3.SaveVersion(config.error_scenario_fixing_routes_path)
@@ -138,7 +139,7 @@ class RouteFixer:
         return start_index, end_index
 
 
-    def _add_one_route_back(self, route_name, start_index, end_index, visum3):
+    def _add_one_route_back(self, route_name, start_index, end_index, visum3, screenshot_taker, config):
         try:
             line = visum3.Net.Lines.ItemByKey(route_name.split(' ')[0])
             direction_code = visum3.Net.Directions.GetAll[0]
@@ -157,9 +158,13 @@ class RouteFixer:
                                0)  # 0 Do not read ; 2 Insert link if necessary ; 1 Open link or turn for transport system
 
             route_items = visum3.CreateNetElements()
+            node1 = None
+            node2 = None
             if start_index != None:
                 nodes = self.error_routes_dict[route_name]['nodes'][:(start_index + 1)] + self.error_routes_dict[route_name]['nodes'][
                                                                                      end_index:]
+                node1 = self.error_routes_dict[route_name]['nodes'][(start_index + 1)]
+                node2 = self.error_routes_dict[route_name]['nodes'][end_index]
                 stops = self.error_routes_dict[route_name]['stops'][:(start_index + 1)] + self.error_routes_dict[route_name]['stops'][
                                                                                      end_index:]
             else:
@@ -174,6 +179,9 @@ class RouteFixer:
                     route_items.Add(node)
 
             visum3.Net.AddLineRoute(route_name, line, direction_code, route_items, paraR1)
+            route = visum3.Net.LineRoutes.ItemByKey(line, direction_code, route_name)
+            screenshot_taker.take_screenshot(visum3, route, Path((config.screenshot_path) / f"{route_name}-after-fixing.png"), config.afer_fixing_gpa_path, node1, node2)
+
 
         except Exception:
             logging.info(f"Not be able to generate a fixed route for route {route_name}.")

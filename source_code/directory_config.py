@@ -39,7 +39,12 @@ class DirectoryConfig:
         self.visum_version = directories["visum_version"]
 
         # Assign base paths
-        self.bus_routes_fix_path = current_path / directories["base_path"]
+        self.bus_routes_fix_path = current_path / directories["bus_route_fixing_temp_base_path"]
+        self.screenshot_path = current_path / 'Screenshots'
+        self.gpa_path = current_path / 'source_code/bus_route_fixer.gpa'
+        self.prior_error_gpa_path = current_path / 'source_code/prior_error.gpa'
+        self.afer_fixing_gpa_path = current_path / 'source_code/after_fixing.gpa'
+        self.error_modification_gpa_path = current_path / 'source_code/error_modification.gpa'
         self.scenario_management_base_path = Path(directories["scenario_management_base_path"])
         self.scenario_management_project_path = Path(directories["scenario_management_project_path"])
         self.modifications_path = Path(
@@ -69,8 +74,6 @@ class DirectoryConfig:
         self.route_deleted_transfer_path = self.bus_routes_fix_path / 'routeDeletedTransfer.tra'
         self.route_fixed_transfer_path = self.bus_routes_fix_path / 'fixedRouteAddedTransfer.tra'
         self.fixed_error_modification_path = self.bus_routes_fix_path / 'fixedErrorModificationFile.tra'
-        self.debug_log_path = self.bus_routes_fix_path / 'debug.log'
-        self.derived_data_log_path = self.bus_routes_fix_path / 'Notes_for_Visum_Modeller.log'
 
 
     def _get_error_modification_path(self):

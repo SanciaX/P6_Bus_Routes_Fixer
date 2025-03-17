@@ -4,20 +4,20 @@ This module contains functions to interact with PTV Visum Scenario Management.
 import win32com.client
 import logging
 
-def add_scenario(visum, project, modifications, scenarios_path, code):
-    new_scenario = project.AddScenario()
+def add_scenario(visum, modications_of_the_scenario, scenarios_path, code = " "):
+    new_scenario = visum.ScenarioManagement.CurrentProject.AddScenario()
     new_scenario_id = new_scenario.AttValue("NO")
     new_scenario.SetAttValue("CODE", code)
     new_scenario.SetAttValue("PARAMETERSET", "1")
-    new_scenario.SetAttValue("MODIFICATIONS", modifications)
+    new_scenario.SetAttValue("MODIFICATIONS", modications_of_the_scenario)
     new_scenario_folder = f"S{str(int(new_scenario_id)).zfill(6)}"
     error_message_path_working = scenarios_path / new_scenario_folder / 'Messages.txt'
     visum.SetErrorFile(error_message_path_working)
     return new_scenario
 
 
-def add_modification(project, config, code, description):
-    new_modification = project.AddModification()
+def add_modification(visum, config, code, description):
+    new_modification = visum.ScenarioManagement.CurrentProject.AddModification()
     new_modification.SetAttValue("Code", code)
     new_modification.SetAttValue(
         "Description", description
@@ -27,8 +27,8 @@ def add_modification(project, config, code, description):
     str_path = str(config.scenario_management_base_path).replace('/', '\\\\')
     mod_path = (
             str_path
-            + "\\Modifications\\" + mod_name
-    )
+            + "\\modifications\\" + mod_name)
+
     return new_modification, mod_path, mod_name, new_mode_id
 
 def apply_model_transfer(visum, tra_path):
