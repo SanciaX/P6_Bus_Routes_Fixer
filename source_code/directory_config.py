@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import logging
 
+
 class DirectoryConfig:
     _instance = None  # Singleton pattern to ensure only one instance is created
     DEFAULT_CONFIG_PATH = "config/directories.json"
     WORKING_DIRECTORY = os.getcwd()
-
 
     def __new__(cls, config_path="config/directories.json"):
         if cls._instance is None:
@@ -35,7 +35,7 @@ class DirectoryConfig:
         with open(self.json_path_path, 'r') as file:
             directories = json.load(file)
 
-        # Vissum version
+        # Visum version
         self.visum_version = directories["visum_version"]
 
         # Assign base paths
@@ -72,7 +72,6 @@ class DirectoryConfig:
         self.debug_log_path = self.bus_routes_fix_path / 'debug.log'
         self.derived_data_log_path = self.bus_routes_fix_path / 'Notes_for_Visum_Modeller.log'
 
-
     def _get_error_modification_path(self):
         """
         Generate the error modification file path dynamically.
@@ -82,7 +81,3 @@ class DirectoryConfig:
         mod_id_length = len(str(self.error_modification_id))
         mod_path_list[-mod_id_length - 4: -4] = str(self.error_modification_id)
         return ''.join(mod_path_list)
-
-
-
-

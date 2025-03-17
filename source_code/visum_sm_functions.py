@@ -3,6 +3,8 @@ This module contains functions to interact with PTV Visum Scenario Management.
 """
 import win32com.client
 import logging
+import os
+
 
 def add_scenario(visum, project, modifications, scenarios_path, code):
     new_scenario = project.AddScenario()
@@ -24,11 +26,8 @@ def add_modification(project, config, code, description):
     )
     new_mode_id = int(new_modification.AttValue("No"))
     mod_name = new_modification.AttValue("TraFile")
-    str_path = str(config.scenario_management_base_path).replace('/', '\\\\')
-    mod_path = (
-            str_path
-            + "\\Modifications\\" + mod_name
-    )
+    str_path = config.scenario_management_base_path.as_posix()
+    mod_path = os.path.join(str_path, "Modifications", mod_name)
     return new_modification, mod_path, mod_name, new_mode_id
 
 def apply_model_transfer(visum, tra_path):

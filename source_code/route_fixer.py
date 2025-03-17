@@ -3,6 +3,7 @@ This file contains functions to fix routes in Visum
 """
 import logging
 
+
 class RouteFixer:
     def __init__(self):
         self.error_routes_dict = None
@@ -41,8 +42,6 @@ class RouteFixer:
             self.error_routes_dict[route_name]['link_check'] = node_pair_checklist
             # by now, self.error_routes_dict's key: route_name, value: {'nodes': nodes, 'stops': stops, 'direction_code': direction_code, 'link_check': node_pair_checklist}
 
-
-
     def add_routes_back(self, visum3, config):
         """
         Add fixed routes back
@@ -71,7 +70,6 @@ class RouteFixer:
             WriteLayoutIntoModelTransferFile=True,
         )
 
-
     def _check_link(self, visum1, node1, node2):
         if visum1.Net.Links.LinkExistsByKey(node1, node2):
             for link in visum1.Net.Links.GetAll:
@@ -82,14 +80,12 @@ class RouteFixer:
                     return True
         return False
 
-
     def _check_turn(self, visum1, node1, node2, node3):
         if visum1.Net.Turns.TurnExistsByKey(node1, node2, node3):
             turn = visum1.Net.Turns.ItemByKey(node1, node2, node3)
             if "B" in turn.AttValue("TSYSSET"):
                 return True
         return False
-
 
     def _find_start_end_nodes(self, route_info, route_name):
         nodes = route_info['nodes']  # including ' ', i.e. where the routeitem is a stop instead of a node
@@ -136,7 +132,6 @@ class RouteFixer:
             end_index = nodes.index(search_end_node)
             logging.info(f"check the route between {search_start_node} and {search_end_node} for Route {route_name}.")
         return start_index, end_index
-
 
     def _add_one_route_back(self, route_name, start_index, end_index, visum3):
         try:

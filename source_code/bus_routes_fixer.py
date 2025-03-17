@@ -13,8 +13,6 @@ import logging
 import os
 import win32com.client
 
-###### PREPARATIONS:
-# Import User's Inputs
 from directory_config import DirectoryConfig
 from error_identifier import RouteErrorIdentifier
 from route_fixer import RouteFixer
@@ -22,6 +20,7 @@ from senario_generator import ScenarioGenerator
 from logger_configuration import setup_logger
 
 logger = setup_logger()
+
 
 class VisumConnector:
     """Manages connections to PTV Visum."""
@@ -97,7 +96,7 @@ class BusRoutesFixer:
             self.route_fixer.add_routes_back(self.visum3, self.config)
             
             ###### SAVE TO SCENARIO MANAGEMENT:
-            self.scenario_generator.save_to_sm(self.sm_project, self.config, self.error_identifier.working_scenario_modification_set, self.visum1)
+            self.scenario_generator.save_to_sm(self.sm_project, self.config, self.error_identifier.working_scenario_modification_list, self.visum1)
 
         except Exception as e:
             logger.error(f"An error occurred during the fixing process: {e}", exc_info=True)

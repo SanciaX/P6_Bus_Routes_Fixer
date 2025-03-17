@@ -9,7 +9,7 @@ from visum_sm_functions import add_scenario, add_modification, apply_model_trans
 
 class RouteErrorIdentifier:
     def __init__(self):
-        self.working_scenario_modification_set = []
+        self.working_scenario_modification_list = []
         self.error_routes_dict = {}
 
     def read_scenario_management(self, visum, sm_project, config):
@@ -19,21 +19,20 @@ class RouteErrorIdentifier:
         error_scenario = visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(config.error_scenario_id)
         old_mod_set = error_scenario.AttValue("MODIFICATIONS")
         mod_list = old_mod_set.split(',')
-        self.working_scenario_modification_set = []
+        self.working_scenario_modification_list = []
         stop = False
         for i in mod_list:
             if int(config.error_modification_id) == int(i):
                 stop = True
             elif not stop:
-                self.working_scenario_modification_set.append(i)
-        working_mod_set = ','.join(self.working_scenario_modification_set)
+                self.working_scenario_modification_list.append(i)
+        working_mod_set = ','.join(self.working_scenario_modification_list)
 
         working_scenario = add_scenario(visum, sm_project, working_mod_set, config.scenarios_path,
                                         "Deselect the modification causing error")
         working_scenario.LoadInput()
         visum.SaveVersion(config.working_scenario_path)
         working_scenario.AttValue("NO")
-
 
     def save_error_routes(self, visum1, visum2, config):
         """
@@ -68,7 +67,6 @@ class RouteErrorIdentifier:
                             visum1.Net.RemoveLineRoute(route_to_remove)
                 except Exception:
                     continue
-
 
     def save_fixed_error_modification(self, visum1, config):
         """
