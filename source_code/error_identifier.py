@@ -1,7 +1,6 @@
 """
 RouteErrorIdentifier contains functions that help to identify error routes.
 """
-
 import shutil
 import logging
 from visum_sm_functions import add_scenario, add_modification, apply_model_transfer, get_route_items
@@ -9,7 +8,7 @@ from visum_sm_functions import add_scenario, add_modification, apply_model_trans
 
 class RouteErrorIdentifier:
     def __init__(self):
-        self.working_scenario_modification_set = []
+        self.working_scenario_modification_list = []
         self.error_routes_dict = {}
 
     def read_scenario_management(self, visum, sm_project, config):
@@ -19,21 +18,18 @@ class RouteErrorIdentifier:
         error_scenario = visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(config.error_scenario_id)
         old_mod_set = error_scenario.AttValue("MODIFICATIONS")
         mod_list = old_mod_set.split(',')
-        self.working_scenario_modification_set = []
+        self.working_scenario_modification_list = []
         stop = False
         for i in mod_list:
             if int(config.error_modification_id) == int(i):
                 stop = True
             elif not stop:
-                self.working_scenario_modification_set.append(i)
-        working_mod_set = ','.join(self.working_scenario_modification_set)
-
-        working_scenario = add_scenario(visum, sm_project, working_mod_set, config.scenarios_path,
-                                        "Deselect the modification causing error")
+                self.working_scenario_modification_list.append(i)
+        working_mod_list = ','.join(self.working_scenario_modification_list)
+        working_scenario = add_scenario(visum, sm_project, working_mod_list, config.scenarios_path, "Deselect the modification causing error")
         working_scenario.LoadInput()
         visum.SaveVersion(config.working_scenario_path)
         working_scenario.AttValue("NO")
-
 
     def save_error_routes(self, visum1, visum2, config):
         """
@@ -59,8 +55,11 @@ class RouteErrorIdentifier:
                     direction_code = line[second_semicolon + 1:second_semicolon + 2]
                     nodes, stops = get_route_items(route_name, visum2)
                     if not route_name in self.error_routes_dict:
-                        self.error_routes_dict[route_name] = {'nodes': nodes, 'stops': stops,
-                                                         'direction_code': direction_code}
+                        self.error_routes_dict[route_name] = {
+                            'nodes': nodes,
+                            'stops': stops,
+                            'direction_code': direction_code
+                        }
                         # Save delete_routes.ver and add_routes.ver
                         iLineRoute_to_delete = visum2.Net.LineRoutes.ItemByKey(line_name, direction_code, route_name)
                         route_to_remove = visum1.Net.LineRoutes.ItemByKey(line_name, direction_code, route_name)
@@ -68,7 +67,6 @@ class RouteErrorIdentifier:
                             visum1.Net.RemoveLineRoute(route_to_remove)
                 except Exception:
                     continue
-
 
     def save_fixed_error_modification(self, visum1, config):
         """
@@ -93,7 +91,7 @@ class RouteErrorIdentifier:
             WriteLayoutIntoModelTransferFile=True,
         )
 
-        # Save scenarioErrorFixing.ver (where we add routes back) so taht we can get fixedRouteAddedTransfer.tra by comparing scenarioErrorFixing.ver against scenarioError.ver
+        # Save scenarioErrorFixing.ver (where we add routes back) so that we can get fixedRouteAddedTransfer.tra by comparing scenarioErrorFixing.ver against scenarioError.ver
         shutil.copy2(
             config.error_scenario_path, config.error_scenario_fixing_routes_path
         )  # error_scenario_path being the error scenario without error routes; error_scenario_fixing_routes_path being the scenario with fixed routes added back
@@ -115,6 +113,4 @@ class RouteErrorIdentifier:
         modification1, mod_delete_routes_path, mod_delete_routes_name, mod_delete_routes_id = add_modification(
             this_project, config, "Erroneous Routes Deleted",
             "Copied from the last working modification and have problematic routes deleted")
-        shutil.copy2(
-            config.route_deleted_transfer_path, mod_delete_routes_path
-        )
+        shutil.copy2(config.route_deleted_transfer_path, mod_delete_routes_path)

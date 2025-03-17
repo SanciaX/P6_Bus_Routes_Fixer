@@ -4,6 +4,7 @@ This module contains functions to interact with PTV Visum Scenario Management.
 import win32com.client
 import logging
 
+
 def add_scenario(visum, project, modifications, scenarios_path, code):
     new_scenario = project.AddScenario()
     new_scenario_id = new_scenario.AttValue("NO")
@@ -31,6 +32,7 @@ def add_modification(project, config, code, description):
     )
     return new_modification, mod_path, mod_name, new_mode_id
 
+
 def apply_model_transfer(visum, tra_path):
     win32com_constants = win32com.client.constants
     anrController = visum.IO.CreateAddNetReadController()
@@ -46,9 +48,9 @@ def apply_model_transfer(visum, tra_path):
     anrController.SetWhatToDo("ChainedUpVehJourneySection", win32com_constants.AddNetRead_DoNothing)
     anrController.SetWhatToDo("UserAttDef", win32com_constants.AddNetRead_Ignore)
     anrController.SetWhatToDo("Operator", win32com_constants.AddNetRead_OverWrite)
-
     anrController.SetConflictAvoidingForAll(10000, "ORG_")
     visum.ApplyModelTransferFile(tra_path, anrController)
+
 
 def get_route_items(route_name,visum):
     """Retrieves nodes and stops."""
@@ -70,5 +72,4 @@ def get_route_items(route_name,visum):
             logging.error(f"Error retrieving route items for {route_name}")
     except Exception:
         pass
-
     return nodes, stops
