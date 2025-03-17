@@ -8,48 +8,42 @@ This repository contains Python scripts designed to fix bus routes in Visum Scen
 
 ## Features
 
-### 1. Identify Erroneous Scenario and Prepare Data
-- Locate the erroneous scenario in the Scenario Management Project.
-- Identify the modification causing route errors.
-- Copy the required files (`.net`, `.tra`, `.txt`) to facilitate fixing.
+### 1. Identify Error Route(s) and Route Items, and Create a New Modification to Delete Error Routes
+- Identify the modification causing errors
+- Create a new scenario containing the modifications before the error occurs (`working_scenario`)
+- Save route items along the error route(s) in the network before loading the error modification. (Note that there may be one or multiple erroneous routes.)
+- Make a copy of the error scenario model (`scenarioError.ver`)  with error routes deleted
+- Save the transfer file that deletes routes from the working scenario (`routeDeletedTransfer.tra`)
+- Apply `routeDeletedTransfer.tra` to a new modification (`Modification Code: Delete Problematic Routes for Scenario xxx`) in Scenario Management
 
-### 2. Build a Working Scenario and Create Transfer Files
-- Create a new scenario (`working_scenario`) with all modifications up to the error-inducing modification (`Mods_(pre_error)`).
-- Generate a transfer file (`.tra`) to delete problematic routes and apply it to a new modification (`Mod_(delete_routes)`).
-- Compare models before and after the deletion to generate `routeAddedTransferStart.tra`, containing route-related data for restoring routes.
-- Update `routeAddedTransferStart.tra` to `routeAddedTransferTemp.tra` by:
-  - Adjusting bus route and profile data.
-  - Removing problematic route entries from the error-causing modification (`Mod_error`).
 
-### 3. Identify Link/Turn Errors Along Problematic Routes
-- Extract nodes along problematic routes from `routeAddedTransferTemp.tra`.
-- In the `Table: Links` and `Table: Turns` sections of the `.net` file, identify node pairs causing errors (e.g., missing links or restricted turns).
+### 2. Add Back Deleted Routes with Non-existent Route Items Deleted and Incomplete Route Section Found through Shortest Path Search 
+- Identify problematic links and turns along the error route(s) in the error scenario's network (using `Visum.Net.Links.LinkExistsByKey` and `Visum.Net.Turns.TurnExistsByKey`)
+- For each error route, find the start and end nodes (`node_before_errors` and `node_after_errors` ) with errors in between.
+- Find the last node before errors occur (`search_start`) and the first node after all the errors (`search_start`)
+- Get the indices of these two nodes in the routeitems instance, so that later the routeitems in between will not be included when adding back new route in the next step 
+- Add each deleted route back, using `Visum.Net.AddLineRoute` with WhatToDo parameters.
+- Save the transfer file of adding fixed routes back (`fixedRouteAddedTransfer.tra`)
 
-### 4. Apply Shortest Path Search in Visum
-- Load the erroneous scenario’s `.net` file in Visum.
-- Search for alternative paths between expanded node pairs (`node_(search_start)` to `node_(search_end)`) around problem areas.
-- Replace problematic route segments with paths found by the shortest path search.
-- Update time profile data and save as `routeAddedTransferFinal.tra`.
-
-### 5. Generate the Fixed Scenario
+### 3. Create New Modifications to Add the Error Modification Back and Add the Fixed Routes Back; Create the Scenario with the Same Network as The Error Scenario but Fixed Error Route(s)
 - Create a new scenario with:
-  - Modifications before the error (`Mods_(pre_error)`).
-  - Route deletions (`Mod_(delete_routes)`).
-  - The corrected error modification (`Mod_error`).
-  - The updated transfer file (`routeAddedTransferFinal.tra`).
+  - Modifications before the error
+  - Route deletions modification
+  - The corrected error modification
+  - A Modification that adds the fixed routes back
 
-### 6. Notify the Modeller
+### 4. Notify the Modeller
 - Display a message box indicating successfully found paths.
-- Provide reminders to verify the modified scenario in Visum.
+- Leave the log file for the modeller to check.
 
 ---
 ## Getting Started
 
 - Clone the repository to your local machine.
 - Install the required Python modules using `pip`.
-- Check the ID of the scenario you'd like to fix in Visum. From the error message of this scenario, find the ID of the modification causing the error.
-- Open the `config/directories.json` file and specify the path of your scenario management (scenario_management_path), the ID of the scenario with route error(s) (scenario_management_path), and the ID of the modification causing the error (error_modification_id).
-- Run the `run_me.py` script (as Admin).
+- Check the ID of the scenario you`d like to fix in Visum. From the error message of this scenario, find the ID of the modification causing the error.
+- Open the `config/directories.json` file and specify the ID of the scenario with route error(s) (scenario_management_path), the ID of the modification causing the error (error_modification_id), the path of your scenario management (scenario_management_base_path) and the path of the scenario management file(.vpdbx) (scenario_management_project_path).
+- Run the `bus_routes_fixer.py` script in the source_code folder (as Admin).
 
 ## Requirements
 
@@ -78,5 +72,5 @@ cd P6_Fix_Bus_Routes
 pip install -r requirements.txt
 
 # run the main script
-python run_me.py
+python bus_routes_fixer.py
 ```
