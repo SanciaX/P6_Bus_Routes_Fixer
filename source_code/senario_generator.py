@@ -26,8 +26,7 @@ class ScenarioGenerator:
         modification4, mod4_path, mode4_name, mode4_id = add_modification(this_project, config,"Problematic Routes Re-added", "Have the deleted problematic routes fixed and re-added to the erroneous scenario's network")
         path_str = config.route_fixed_transfer_path.as_posix()
         shutil.copy2(path_str, mod4_path)
-        mode_list_str = ','.join(new_mode_list)
-        final_mod_list_str = mode_list_str  + str(mode2_id) + "," + str(mode3_id) + "," + str(mode4_id)
+        final_mod_list_str = ",".join(new_mode_list + list(map(str, [mode2_id, mode3_id, mode4_id])))
         logging.info("The scenario fixed has the following modifications: " + final_mod_list_str)
         code = "Bus Route Fixed for Scenario " + config.error_scenario_id_str
         cur_scenario = add_scenario(visum1, this_project, final_mod_list_str, config.scenarios_path,code)
