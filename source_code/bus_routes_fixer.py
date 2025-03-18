@@ -12,12 +12,13 @@ Instructions:
 import logging
 import os
 import win32com.client
+import shutil
 
-from directory_config import DirectoryConfig
-from error_identifier import RouteErrorIdentifier
-from route_fixer import RouteFixer
-from senario_generator import ScenarioGenerator
-from logger_configuration import setup_logger
+from source_code.directory_config import DirectoryConfig
+from source_code.error_identifier import RouteErrorIdentifier
+from source_code.route_fixer import RouteFixer
+from source_code.scenario_generator import ScenarioManagementHelper
+from source_code.logger_configuration import setup_logger
 
 
 logger = setup_logger()
@@ -32,9 +33,20 @@ class VisumConnector:
     def connect(self):
         """Connects to Visum."""
         try:
+            # First try with EnsureDispatch
+            try:
+                self.visum = win32com.client.gencache.EnsureDispatch(f"Visum.Visum.{self.visum_version}")
+                logging.info(f"PTV Visum started using EnsureDispatch: {self.visum}")
+                return self.visum
+            except Exception as e:
+                logging.warning(f"EnsureDispatch failed: {e}")
+
+            # Clear gen_py cache and retry
+            self.clear_cache()
             self.visum = win32com.client.gencache.EnsureDispatch(f"Visum.Visum.{self.visum_version}")
-            logging.info(f"PTV Visum started: {self.visum}")
+            logging.info(f"After clearing the gen_py cache, PTV Visum started using EnsureDispatch: {self.visum}")
             return self.visum
+
         except Exception as e:
             logging.error(f"Error connecting to Visum: {e}")
             raise
@@ -44,6 +56,12 @@ class VisumConnector:
         if self.visum:
             self.visum = None
             logging.info("Visum connection closed.")
+
+    @staticmethod
+    def clear_cache():
+        cache_path = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Temp", "gen_py")
+        if os.path.exists(cache_path):
+            shutil.rmtree(cache_path)
 
 
 class BusRoutesFixer:
@@ -56,7 +74,7 @@ class BusRoutesFixer:
         """Initializes the BusRoutesFixer with configuration and Visum connections."""
         if not config_path:
             config_path = self.DEFAULT_CONFIG_PATH
-        self.config = DirectoryConfig()# Creates and loads the configuration
+        self.config = DirectoryConfig(config_path) # Creates and loads the configuration
         self.visum_connector1 = VisumConnector(self.config.visum_version)
         self.visum1 = self.visum_connector1.connect()  # visum1 is linked to the scenario management project
         self.sm_project = self.visum1.ScenarioManagement.OpenProject(self.config.scenario_management_path)
@@ -65,7 +83,8 @@ class BusRoutesFixer:
         self.com_constants = win32com.client.constants
         self.error_identifier = RouteErrorIdentifier()
         self.route_fixer = RouteFixer()
-        self.scenario_generator = ScenarioGenerator()
+        self.scenario_generator = ScenarioManagementHelper()
+        self.visum_connector3 = None
 
     def run_fixer(self):
         """Main function to identify and fix bus route errors."""
@@ -73,8 +92,7 @@ class BusRoutesFixer:
         try:
             ###### IDENTIFY ERRORS:
             # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
-            self.error_identifier.read_scenario_management(self.visum1, self.sm_project,
-                                                                               self.config)
+            self.error_identifier.read_scenario_management(self.visum1, self.sm_project, self.config)
             # Save route items along the error routes in the network before loading the error modification
             self.error_identifier.save_error_routes(self.visum1, self.visum2,
                                                                              self.config)  # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
@@ -96,7 +114,7 @@ class BusRoutesFixer:
             self.route_fixer.add_routes_back(self.visum3, self.config)
             
             ###### SAVE TO SCENARIO MANAGEMENT:
-            self.scenario_generator.save_to_sm(self.sm_project, self.config, self.error_identifier.working_scenario_modification_list, self.visum1)
+            self.scenario_generator.save_to_scenario_manager(self.sm_project, self.config, self.error_identifier.working_scenario_modification_list, self.visum1)
 
         except Exception as e:
             logger.error(f"An error occurred during the fixing process: {e}", exc_info=True)

@@ -3,7 +3,7 @@ RouteErrorIdentifier contains functions that help to identify error routes.
 """
 import shutil
 import logging
-from visum_sm_functions import add_scenario, add_modification, apply_model_transfer, get_route_items
+from source_code.visum_sm_functions import add_scenario, add_modification, apply_model_transfer, get_route_items
 
 
 class RouteErrorIdentifier:

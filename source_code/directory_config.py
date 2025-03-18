@@ -12,7 +12,6 @@ class DirectoryConfig:
     def __new__(cls, config_path="config/directories.json"):
         if cls._instance is None:
             cls._instance = super(DirectoryConfig, cls).__new__(cls)
-            config_path = "config/directories.json"
             cls._instance._initialize(config_path)
         return cls._instance
 
@@ -35,7 +34,7 @@ class DirectoryConfig:
         with open(self.json_path_path, 'r') as file:
             directories = json.load(file)
 
-        # Vissum version
+        # Visum version
         self.visum_version = directories["visum_version"]
 
         # Assign base paths
