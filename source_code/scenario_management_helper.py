@@ -59,7 +59,7 @@ class ScenarioManagementHelper:
                 parts = message.Text.split(";")
                 line_name = parts[0].split(" ")[-1]
                 line_route_name = parts[1]
-                line_route_direction = parts[2].split(" ")[0]
+                line_route_direction = parts[2].split(" ")[0][0]
                 line_route_key_set.add((line_name, line_route_direction, line_route_name))
 
         self.visum_connection_1.visum.LoadVersion(self.config.working_scenario_path)

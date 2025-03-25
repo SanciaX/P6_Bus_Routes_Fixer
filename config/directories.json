@@ -1,8 +1,8 @@
 {
   "base_path": "bus_route_fixing_temp",
   "bus_routes_fix_path": "Bus_Routes_Fix",
-  "error_modification_id": "007",
-  "error_scenario_id": "010",
+  "error_modification_id": "008",
+  "error_scenario_id": "011",
   "scenario_management_base_path": "C:/Users/Shanshan Xie/TfL/06 Scenario management/01_Bus_Route_Script_Test_Subnetwork",
   "scenario_management_project_path": "C:/Users/Shanshan Xie/TfL/06 Scenario management/01_Bus_Route_Script_Test_Subnetwork/Bus_Route_Script_Test_Subnetwork.vpdbx",
   "visum_version": 25,
