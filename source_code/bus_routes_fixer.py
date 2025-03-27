@@ -31,7 +31,6 @@ class BusRoutesFixer:
         ###### IDENTIFY ERRORS:
         # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
         self.scenario_management_project.read_scenario_management(self.config)
-
         # Save route items along the error routes in the network before loading the error modification
         # Note: visum_connection1 is used to delete the error routes and save the routes_deleting_ver as a new modification, visum_connection2 keeps these error routes so that we can get routes' and routeitems' attributes from its connection
         self.scenario_management_project.save_error_routes()

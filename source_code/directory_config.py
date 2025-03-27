@@ -5,6 +5,7 @@ import logging
 import shutil
 
 
+
 class DirectoryConfig:
     _instance = None
     DEFAULT_CONFIG_PATH = "config/directories.json"

@@ -9,7 +9,6 @@ import win32com.client
 import os
 
 
-
 class ScenarioManagementHelper:
     def __init__(self, project_path, config):
         self.visum_connection_1 = VisumConnection(25) # visum_connection_1 is linked to the scenario management project
@@ -37,6 +36,7 @@ class ScenarioManagementHelper:
         Create a new scenario containing the modifications before the error occurs and save the .ver file
         """
         error_scenario = self.project.Scenarios.ItemByKey(config.error_scenario_id)
+
         old_mod_list_str = error_scenario.AttValue("MODIFICATIONS")
         mod_list = old_mod_list_str.split(',')
         self.working_scenario_modification_list = [a for a in mod_list if int(a) != int(config.error_modification_id)]
@@ -97,6 +97,7 @@ class ScenarioManagementHelper:
         if lineroute is None:
             logging.error(f"Error retrieving route items for {line_route_key[-1]}")
         return nodes, stops
+
     def save_fixed_error_modification(self):
         """
         Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
@@ -316,7 +317,6 @@ class ScenarioManagementHelper:
 
         return error_stop_pairs_indices
 
-
     def add_routes_back(self):
         """
         Add fixed routes back
@@ -409,3 +409,4 @@ class ScenarioManagementHelper:
                 visum_connection.visum.Net.Marking.Add(stop_marking)
         visum_connection.visum.Graphic.Screenshot(screenshotpath, ScreenResFactor=1)
         visum_connection.visum.Net.Marking.Clear
+
