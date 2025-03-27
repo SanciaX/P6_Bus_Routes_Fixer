@@ -1,7 +1,7 @@
 """
 This file contains the function that saves the fixed modifications and the fixed scenario to the Visum scenario manager.
 """
-# from source_code.visum_sm_functions import add_scenario, add_modification
+
 import shutil
 import logging
 from source_code.visum_connection import VisumConnection
@@ -36,7 +36,7 @@ class ScenarioManagementHelper:
         """
         Create a new scenario containing the modifications before the error occurs and save the .ver file
         """
-        error_scenario = self.visum_connection_1.visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(config.error_scenario_id)
+        error_scenario = self.project.Scenarios.ItemByKey(config.error_scenario_id)
         old_mod_list_str = error_scenario.AttValue("MODIFICATIONS")
         mod_list = old_mod_list_str.split(',')
         self.working_scenario_modification_list = [a for a in mod_list if int(a) != int(config.error_modification_id)]
@@ -51,7 +51,7 @@ class ScenarioManagementHelper:
         Identify and remove erroneous routes which are recognised from the messages file.
         """
         self.visum_connection_2.visum.LoadVersion(self.config.working_scenario_path)  # visum2 links to error route instances
-        self.error_scenario = self.visum_connection_1.visum.ScenarioManagement.CurrentProject.Scenarios.ItemByKey(self.config.error_scenario_id)
+        self.error_scenario = self.project.Scenarios.ItemByKey(self.config.error_scenario_id)
         self.error_scenario.LoadInput()
         line_route_key_set = set()
         for message in self.visum_connection_1.visum.Messages:
@@ -77,7 +77,7 @@ class ScenarioManagementHelper:
             screenshot_path = os.path.join(self.config.screenshot_path, f"{line_route_key[-1]}-pre-errors.png")
             self.take_screenshot(self.visum_connection_1, route_to_remove, screenshot_path, self.config.prior_error_gpa_path)
 
-            # remove the error line route from Visum_1
+            # Remove the error line route from Visum_1
             self.visum_connection_1.visum.Net.RemoveLineRoute(route_to_remove)
 
     @staticmethod
@@ -97,13 +97,12 @@ class ScenarioManagementHelper:
         if lineroute is None:
             logging.error(f"Error retrieving route items for {line_route_key[-1]}")
         return nodes, stops
-
     def save_fixed_error_modification(self):
         """
         Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
         """
-        # Delete error routes from the network before loading the modification causing errors
+        # Save the .ver with error routes deleted from the network before loading the modification causing errors
         self.visum_connection_1.visum.SaveVersion(self.config.working_scenario_delete_routes_path)
         # Apply the error modification with an anrController.SetWhatToDo parameter that ignore conflicting LineRouteItem data, so that when load ing the error modification, if the error modification contains data about routes just deleted, there wouldn't be error
         self.apply_model_transfer(self.visum_connection_1, self.config.error_modification_path)
@@ -138,15 +137,20 @@ class ScenarioManagementHelper:
             NonEmptyTablesOnly=True,
             WriteLayoutIntoModelTransferFile=True,
         )
-        # Create a new modification in Scenario Management which deletes error routes (i.e. apply routeDeletedTransfer.tra)
-        modification1, mod_delete_routes_path, mod_delete_routes_name, mod_delete_routes_id = self.add_modification(
-            "Erroneous Routes Deleted",
-            "Copied from the last working modification and have problematic routes deleted"
-        )
-        shutil.copy2(self.config.route_deleted_transfer_path, mod_delete_routes_path)
+
+    def take_screenshots_in_error_modification(self):
+        error_modification = int(self.config.error_scenario_id)
+        error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
+        error_modification_only_scenario.LoadInput()
+        #Take a screenshot of each error route in the error modification
+        for line_route_key in self.error_routes_dict.keys():
+            route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
+            screenshot_path = os.path.join(self.config.screenshot_path, (line_route_key[-1] + "-in_the_error_modification.png"))
+            self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
 
     def save_to_scenario_manager(self, new_mode_list):
-        # generate a modification that deletes the problematic routes
+
+        # generate a modification that deletes the problematic routes (i.e. apply routeDeletedTransfer.tra)
         code = "Delete Problematic Routes for Scenario " + self.config.error_scenario_id_str
         modification2, mod2_path, mode2_name, mode2_id = self.add_modification(code, "Delete problematic routes")
         path_str = self.config.route_deleted_transfer_path.as_posix()
@@ -167,9 +171,10 @@ class ScenarioManagementHelper:
         code = "Bus Route Fixed for Scenario " + self.config.error_scenario_id_str
         cur_scenario = self.add_scenario(final_mod_list_str, self.config.scenarios_path, code)
         cur_scenario.LoadInput()
-        self.project.RemoveScenario(cur_scenario.AttValue("NO")-1)
+        self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2)
+        self.project.RemoveScenario(cur_scenario.AttValue("NO") - 1)
 
-    def add_scenario(self, modifications, scenarios_path, code):
+    def add_scenario(self, modifications, scenarios_path, code = ' '):
         new_scenario = self.project.AddScenario()
         new_scenario_id = new_scenario.AttValue("NO")
         new_scenario.SetAttValue("CODE", code)
@@ -320,7 +325,6 @@ class ScenarioManagementHelper:
 
         # For each error route
         for line_route_key in self.error_routes_dict.keys():
-
             # Add the fixed line_route_key back, ignoring the LineRouteItems in between each pair of bus stops between which there are link/turn error(s)
             self._add_each_route_back(line_route_key, self.visum_connection_3)
 
@@ -382,7 +386,7 @@ class ScenarioManagementHelper:
                 stops_marking.append(stops[s1])
                 stops_marking.append(stops[s2])
             self.take_screenshot(visum_connection, route_instance, screenshot_path,
-                                 self.config.afer_fixing_gpa_path, stops_marking)
+                                 self.config.after_fixing_gpa_path, stops_marking)
 
         except Exception:
             logging.info(f"Not be able to generate a fixed route for route {line_route_key[-1]}.")
