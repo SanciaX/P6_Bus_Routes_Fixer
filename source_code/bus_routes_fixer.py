@@ -1,13 +1,4 @@
-"""
-# -*- coding: utf-8 -*-
-This version addresses various route error types through shortest-path search including 'turn closed', 'no link', ''is blocked for the transport system''
-Author: Shanshan Xie, Adam Fradgley & Birendra Shrestha
-Adapted from: P6FixBusRoute30.py (Birendra Shrestha)
 
-Instructions:
-- Step 1: Specify 'scenario_management_base_path', 'scenario_management_project_path' 'error_modification_id' & 'error_scenario_id' in the ../directories.json
-- Step 2: Run the main script 'bus_routes_fixer.py'
-"""
 
 import logging
 import os
@@ -22,7 +13,7 @@ logger = setup_logger()
 
 class BusRoutesFixer:
     """Main class to fix bus route errors in Visum."""
-    DEFAULT_CONFIG_PATH = "../config/directories.json"
+    DEFAULT_CONFIG_PATH = "config/directories.json"
     WORKING_DIRECTORY = os.getcwd()
     BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bus_route_fixing_temp")
 
@@ -41,8 +32,9 @@ class BusRoutesFixer:
         # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
         self.scenario_management_project.read_scenario_management(self.config)
         # Save route items along the error routes in the network before loading the error modification
-        # Note: visum1 is used to delete the error routes, visum2 is used to index error routes
+        # Note: visum_connection1 is used to delete the error routes and save the routes_deleting_ver as a new modification, visum_connection2 keeps these error routes so that we can get routes' and routeitems' attributes from its connection
         self.scenario_management_project.save_error_routes()
+
         # Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         # This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
         self.scenario_management_project.save_fixed_error_modification()
@@ -52,10 +44,13 @@ class BusRoutesFixer:
 
         ###### FIX ERRORS
         # Use the network of the error scenario to find problematic link(s) along error route(s)
-        self.scenario_management_project.find_error_links()
+        self.scenario_management_project.find_stop_pairs_to_search_path()
 
         # Generate the transfer file that adds the fixed routes back
         self.scenario_management_project.add_routes_back()
+
+        # Take a screenshot of each error route in the error modification
+        self.scenario_management_project.take_screenshots_in_error_modification()
 
         ###### SAVE TO SCENARIO MANAGEMENT:
         self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.working_scenario_modification_list)

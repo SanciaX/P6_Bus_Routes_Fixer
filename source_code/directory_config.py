@@ -2,6 +2,8 @@ import os
 import json
 from pathlib import Path
 import logging
+import shutil
+
 
 
 class DirectoryConfig:
@@ -43,6 +45,41 @@ class DirectoryConfig:
         self.scenario_management_project_path = Path(directories["scenario_management_project_path"])
         self.modifications_path = Path(self.scenario_management_base_path) / "Modifications"
         self.scenarios_path = Path(self.scenario_management_base_path) / "Scenarios"
+
+        # Clear files in the screenshots folder if it exists
+        self.screenshot_path = current_path / 'Screenshots'
+        if os.path.exists(self.screenshot_path):
+            for filename in os.listdir(self.screenshot_path):
+                file_path = os.path.join(self.screenshot_path, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    logging.error(f'Failed to delete {file_path}. Reason: {e}')
+        else:
+            logging.error(f'The path {self.screenshot_path} does not exist.')
+            
+        # Screenshot paths
+        self.gpa_path = current_path / 'source_code/bus_route_fixer.gpa'
+        self.prior_error_gpa_path = current_path / 'source_code/prior_error.gpa'
+        self.after_fixing_gpa_path = current_path / 'source_code/after_fixing.gpa'
+        self.error_modification_gpa_path = current_path / 'source_code/error_modification.gpa'
+
+        #Clear files in the bus_routes_fix_path if it exists
+        if os.path.exists(self.bus_routes_fix_path):
+            for filename in os.listdir(self.bus_routes_fix_path):
+                file_path = os.path.join(self.bus_routes_fix_path, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    logging.error(f'Failed to delete {file_path}. Reason: {e}')
+        else:
+            logging.error(f'The path {self.bus_routes_fix_path} does not exist.')
 
         # Create the base path if it does not exist
         Path(self.bus_routes_fix_path).mkdir(exist_ok=True, parents=True)
