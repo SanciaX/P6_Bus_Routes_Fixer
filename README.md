@@ -42,7 +42,7 @@ This repository contains Python scripts designed to fix bus routes in Visum Scen
 - Clone the repository to your local machine.
 - Install the required Python modules using `pip`.
 - Check the ID of the scenario you`d like to fix in Visum. From the error message of this scenario, find the ID of the modification causing the error.
-- Open the `config/directories.json` file and specify the ID of the scenario with route error(s) (scenario_management_path), the ID of the modification causing the error (error_modification_id), the path of your scenario management (scenario_management_base_path) and the path of the scenario management file(.vpdbx) (scenario_management_project_path).
+- Open the `config/directories.json` file and specify the ID of the scenario with route error(s) (scenario_management_path), the ID of the modification causing the error (error_modification_ids), the path of your scenario management (scenario_management_base_path) and the path of the scenario management file(.vpdbx) (scenario_management_project_path).
 - Run the `bus_routes_fixer.py` script in the source_code folder (as Admin).
 
 ## Requirements
