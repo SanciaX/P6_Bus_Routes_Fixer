@@ -4,7 +4,7 @@ This file contains the function that saves the fixed modifications and the fixed
 
 import shutil
 import logging
-from source_code.visum_connection import VisumConnection
+from bus_routes_fixer.visum_connection import VisumConnection
 import win32com.client
 import os
 

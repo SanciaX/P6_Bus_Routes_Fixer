@@ -11,9 +11,8 @@ Instructions:
 """
 
 
-from source_code.bus_routes_fixer import main
-
+from ..bus_routes_fixer import main
 
 if __name__ == "__main__":
-    config_path = "config/directories.json"
+    config_path = "bus_routes_fixer/config/directories_P6_Example.json"
     main(config_path)

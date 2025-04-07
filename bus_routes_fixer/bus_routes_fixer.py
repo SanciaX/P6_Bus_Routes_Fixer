@@ -3,19 +3,18 @@
 import logging
 import os
 
-from source_code.directory_config import DirectoryConfig
-from source_code.scenario_management_helper import ScenarioManagementHelper
-from source_code.logger_configuration import setup_logger
-from source_code.visum_connection import VisumConnection
+from bus_routes_fixer.directory_config import DirectoryConfig
+from bus_routes_fixer.scenario_management_helper import ScenarioManagementHelper
+from bus_routes_fixer.logger_configuration import setup_logger
 
 logger = setup_logger()
 
 
 class BusRoutesFixer:
     """Main class to fix bus route errors in Visum."""
-    DEFAULT_CONFIG_PATH = "config/directories_P6_Example.json"
+    DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories_P6_Example.json"
     WORKING_DIRECTORY = os.getcwd()
-    BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bus_route_fixing_temp")
+    BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "outputs")
 
     def __init__(self, config_path=None):
         """Initializes the BusRoutesFixer with configuration and Visum connections."""

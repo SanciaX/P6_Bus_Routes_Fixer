@@ -8,10 +8,10 @@ import shutil
 
 class DirectoryConfig:
     _instance = None
-    DEFAULT_CONFIG_PATH = "config/directories_P6_Example.json"
+    DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories_P6_Example.json"
     WORKING_DIRECTORY = os.getcwd()
 
-    def __new__(cls, config_path="config/directories_P6_Example.json"):
+    def __new__(cls, config_path="bus_routes_fixer/config/directories_P6_Example.json"):
         if cls._instance is None:
             cls._instance = super(DirectoryConfig, cls).__new__(cls)
             cls._instance._initialize(config_path)
@@ -47,7 +47,7 @@ class DirectoryConfig:
         self.scenarios_path = Path(self.scenario_management_base_path) / "Scenarios"
 
         # Clear files in the screenshots folder if it exists
-        self.screenshots_path = current_path / 'Screenshots'
+        self.screenshots_path = current_path / 'bus_routes_screenshots'
         if os.path.exists(self.screenshots_path):
             for filename in os.listdir(self.screenshots_path):
                 file_path = os.path.join(self.screenshots_path, filename)
@@ -62,10 +62,10 @@ class DirectoryConfig:
             logging.info(f'The path {self.screenshots_path} does not exist.')
             
         # screenshot gpas' paths
-        self.gpa_path = current_path / 'source_code/bus_route_fixer.gpa'
-        self.prior_error_gpa_path = current_path / 'source_code/prior_error.gpa'
-        self.after_fixing_gpa_path = current_path / 'source_code/after_fixing.gpa'
-        self.error_modification_gpa_path = current_path / 'source_code/error_modification.gpa'
+        self.gpa_path = current_path / 'bus_routes_fixer/resources/bus_route_fixer.gpa'
+        self.prior_error_gpa_path = current_path / 'bus_routes_fixer/resources/prior_error.gpa'
+        self.after_fixing_gpa_path = current_path / 'bus_routes_fixer/resources/after_fixing.gpa'
+        self.error_modification_gpa_path = current_path / 'bus_routes_fixer/resources/error_modification.gpa'
 
         #Clear files in the bus_routes_fix_path if it exists
         if os.path.exists(self.bus_routes_fix_path):
