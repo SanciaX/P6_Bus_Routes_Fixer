@@ -4,7 +4,7 @@ This file contains the function that saves the fixed modifications and the fixed
 
 import shutil
 import logging
-from source_code.visum_connection import VisumConnection
+from bus_routes_fixer.visum_connection import VisumConnection
 import win32com.client
 import os
 
@@ -17,7 +17,8 @@ class ScenarioManagementHelper:
         self.com_constants = win32com.client.constants
         self.config = config
         self.project = self.visum_connection_1.visum.ScenarioManagement.OpenProject(project_path)
-        self.working_scenario_modification_list = []
+        self.pre_error_modifications_list = []
+        self.after_error_modifications_list = []
         self.error_routes_dict = {}
         self.error_scenario = None
 
@@ -39,8 +40,12 @@ class ScenarioManagementHelper:
 
         old_mod_list_str = error_scenario.AttValue("MODIFICATIONS")
         mod_list = old_mod_list_str.split(',')
-        self.working_scenario_modification_list = [a for a in mod_list if int(a) != int(config.error_modification_id)]
-        working_mod_list = ','.join(self.working_scenario_modification_list)
+        for mod in mod_list:
+            if int(mod) < int(config.error_modification_ids[0]):
+                self.pre_error_modifications_list.append(mod)
+            if int(mod) > int(config.error_modification_ids[-1]):
+                self.after_error_modifications_list.append(mod)
+        working_mod_list = ','.join(self.pre_error_modifications_list)
         working_scenario = self.add_scenario(working_mod_list, config.scenarios_path, "Deselect the modification causing error")
         working_scenario.LoadInput()
         self.visum_connection_1.visum.SaveVersion(config.working_scenario_path)
@@ -74,7 +79,7 @@ class ScenarioManagementHelper:
             route_to_remove = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
 
             # Take a screenshot of the route before removing it
-            screenshot_path = os.path.join(self.config.screenshot_path, f"{line_route_key[-1]}-pre-errors.png")
+            screenshot_path = os.path.join(self.config.screenshots_path, f"{line_route_key[-1]}-pre-errors.png")
             self.take_screenshot(self.visum_connection_1, route_to_remove, screenshot_path, self.config.prior_error_gpa_path)
 
             # Remove the error line route from Visum_1
@@ -98,7 +103,7 @@ class ScenarioManagementHelper:
             logging.error(f"Error retrieving route items for {line_route_key[-1]}")
         return nodes, stops
 
-    def save_fixed_error_modification(self):
+    def save_fixed_error_modifications(self):
         """
         Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
@@ -106,24 +111,35 @@ class ScenarioManagementHelper:
         # Save the .ver with error routes deleted from the network before loading the modification causing errors
         self.visum_connection_1.visum.SaveVersion(self.config.working_scenario_delete_routes_path)
         # Apply the error modification with an anrController.SetWhatToDo parameter that ignore conflicting LineRouteItem data, so that when load ing the error modification, if the error modification contains data about routes just deleted, there wouldn't be error
-        self.apply_model_transfer(self.visum_connection_1, self.config.error_modification_path)
+        for i in range(len(self.config.list_of_error_modification_paths)):
+            self.apply_model_transfer(self.visum_connection_1, self.config.list_of_error_modification_paths[i])
         # Save the Error Scenario Model with the error routes deleted
-        self.visum_connection_1.visum.SaveVersion(self.config.error_scenario_path)
+            self.visum_connection_1.visum.SaveVersion(self.config.list_of_scenarios_built_when_adding_each_error_modification[i])
         # Save the copy of the error modification that has already ignored data of already deleted error routes
         # fixedErrorModificationFile.tra is the same as the error modification except that it doesn't contain data about deleted routes
-        self.visum_connection_1.visum.GenerateModelTransferFileBetweenVersionFiles(
-            self.config.working_scenario_delete_routes_path,
-            self.config.error_scenario_path,
-            self.config.fixed_error_modification_path,
-            LayoutFile="",
-            NonDefaultOnly=False,
-            NonEmptyTablesOnly=True,
-            WriteLayoutIntoModelTransferFile=True,
-        )
-
+            if i == 0:
+                self.visum_connection_1.visum.GenerateModelTransferFileBetweenVersionFiles(
+                    self.config.working_scenario_delete_routes_path,
+                    self.config.list_of_scenarios_built_when_adding_each_error_modification[i],
+                    self.config.list_fixed_error_modification_paths[i],
+                    LayoutFile="",
+                    NonDefaultOnly=False,
+                    NonEmptyTablesOnly=True,
+                    WriteLayoutIntoModelTransferFile=True,
+                )
+            else:
+                self.visum_connection_1.visum.GenerateModelTransferFileBetweenVersionFiles(
+                    self.config.list_of_scenarios_built_when_adding_each_error_modification[i-1],
+                    self.config.list_of_scenarios_built_when_adding_each_error_modification[i],
+                    self.config.list_fixed_error_modification_paths[i],
+                    LayoutFile="",
+                    NonDefaultOnly=False,
+                    NonEmptyTablesOnly=True,
+                    WriteLayoutIntoModelTransferFile=True,
+                )
         # Save scenarioErrorFixing.ver (where we add routes back) so that we can get fixedRouteAddedTransfer.tra by comparing scenarioErrorFixing.ver against scenarioError.ver
-        # error_scenario_path being the error scenario without error routes; error_scenario_fixing_routes_path being the scenario with fixed routes added back
-        shutil.copy2(self.config.error_scenario_path, self.config.error_scenario_fixing_routes_path)
+        # each scenario in list_of_scenarios_built_when_adding_each_error_modification being the error scenario without error routes; error_scenario_fixing_routes_path being the scenario with fixed routes added back
+        shutil.copy2(self.config.list_of_scenarios_built_when_adding_each_error_modification[-1], self.config.error_scenario_fixing_routes_path)
 
     def save_the_routes_deleting_ver(self):
         """
@@ -139,40 +155,52 @@ class ScenarioManagementHelper:
             WriteLayoutIntoModelTransferFile=True,
         )
 
-    def take_screenshots_in_error_modification(self):
-        error_modification = int(self.config.error_scenario_id)
-        error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
-        error_modification_only_scenario.LoadInput()
-        #Take a screenshot of each error route in the error modification
-        for line_route_key in self.error_routes_dict.keys():
-            route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
-            screenshot_path = os.path.join(self.config.screenshot_path, (line_route_key[-1] + "-in_the_error_modification.png"))
-            self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
+    def take_screenshots_in_error_modifications(self):
+        for error_modification_id in self.config.error_modification_ids:
+            error_modification = int(error_modification_id)
+            error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
+            error_modification_only_scenario.LoadInput()
+            #Take a screenshot of each error route in the error modification
+            for line_route_key in self.error_routes_dict.keys():
+                route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
+                screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] + f"-in_the_error_modification-{error_modification_id}.png"))
+                self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
 
-    def save_to_scenario_manager(self, new_mode_list):
-
+    def save_to_scenario_manager(self, pre_error_modifications_list, after_error_modifications_list):
         # generate a modification that deletes the problematic routes (i.e. apply routeDeletedTransfer.tra)
         code = "Delete Problematic Routes for Scenario " + self.config.error_scenario_id_str
-        modification2, mod2_path, mode2_name, mode2_id = self.add_modification(code, "Delete problematic routes")
+        deleting_routes_mod_instance, deleting_routes_mod_path, deleting_routes_mod_name, deleting_routes_mod_id = self.add_modification(code, "Delete problematic routes")
         path_str = self.config.route_deleted_transfer_path.as_posix()
-        shutil.copy2(path_str, mod2_path)
+        shutil.copy2(path_str, deleting_routes_mod_path)
 
         # generate a modification that is copied from the error modification but ignores data about the problematic routes
-        code = "Add the Modification that Resulted in Errors Back " + self.config.error_scenario_id_str
-        modification3, mod3_path, mode3_name, mode3_id = self.add_modification(code, "With no info. about deleted error routes")
-        path_str = self.config.fixed_error_modification_path.as_posix()
-        shutil.copy2(path_str, mod3_path)
+        middle_mod_list = []
+        for i in range(len(self.config.error_modification_ids)):
+            code = f"Add  M{int(self.config.error_modification_ids[i]):06d} to " + self.config.error_scenario_id_str
+            middle_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
+                                                                                   "With no deleted error routes related data")
+            middle_mod_list.append(mod_i_id)
+            path_str = self.config.list_fixed_error_modification_paths[i].as_posix()
+            shutil.copy2(path_str, mod_i_path)
 
         # generate a modification that adds the fixed routes
-        modification4, mod4_path, mode4_name, mode4_id = self.add_modification("Problematic Routes Re-added", "Have the deleted problematic routes fixed and re-added to the erroneous scenario's network")
+        adding_routes_mod_instance, adding_routes_mod_path, adding_routes_mod_name, adding_routes_mod_id = self.add_modification("Problematic Routes Re-added", "Have the deleted problematic routes fixed and re-added to the erroneous scenario's network")
         path_str = self.config.route_fixed_transfer_path.as_posix()
-        shutil.copy2(path_str, mod4_path)
-        final_mod_list_str = ",".join(new_mode_list + list(map(str, [mode2_id, mode3_id, mode4_id])))
+        shutil.copy2(path_str, adding_routes_mod_path)
+        deleting_routes_mod_id_str = str(deleting_routes_mod_id)
+        middle_mod_list_str = list(map(str, middle_mod_list))
+        adding_routes_mod_id_str = str(adding_routes_mod_id)
+        mid_mods_list = [deleting_routes_mod_id_str] + middle_mod_list_str + [adding_routes_mod_id_str]
+        if after_error_modifications_list:
+            final_mod_list_str = ",".join(pre_error_modifications_list + mid_mods_list + after_error_modifications_list)
+        else:
+            final_mod_list_str = ",".join(pre_error_modifications_list + mid_mods_list)
         logging.info("The scenario fixed has the following modifications: " + final_mod_list_str)
         code = "Bus Route Fixed for Scenario " + self.config.error_scenario_id_str
         cur_scenario = self.add_scenario(final_mod_list_str, self.config.scenarios_path, code)
         cur_scenario.LoadInput()
-        self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2)
+        for i in range(len(self.config.error_modification_ids)):
+            self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2 - i)
         self.project.RemoveScenario(cur_scenario.AttValue("NO") - 1)
 
     def add_scenario(self, modifications, scenarios_path, code = ' '):
@@ -200,19 +228,19 @@ class ScenarioManagementHelper:
     def apply_model_transfer(visum_connection, tra_path):
         win32com_constants = win32com.client.constants
         anrController = visum_connection.visum.IO.CreateAddNetReadController()
-        anrController.SetWhatToDo("Line", win32com_constants.AddNetRead_OverWrite)
+        anrController.SetWhatToDo("Line", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("LineRoute", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("LineRouteItem", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("TimeProfile", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("TimeProfileItem", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("VehJourney", win32com_constants.AddNetRead_Ignore)
         anrController.SetUseNumericOffset("VehJourney", True)
-        anrController.SetWhatToDo("VehJourneyItem", win32com_constants.AddNetRead_DoNothing)
+        anrController.SetWhatToDo("VehJourneyItem", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("VehJourneySection", win32com_constants.AddNetRead_Ignore)
-        anrController.SetWhatToDo("ChainedUpVehJourneySection", win32com_constants.AddNetRead_DoNothing)
+        anrController.SetWhatToDo("ChainedUpVehJourneySection", win32com_constants.AddNetRead_Ignore)
         anrController.SetWhatToDo("UserAttDef", win32com_constants.AddNetRead_Ignore)
-        anrController.SetWhatToDo("Operator", win32com_constants.AddNetRead_OverWrite)
-        anrController.SetConflictAvoidingForAll(10000, "ORG_")
+        anrController.SetWhatToDo("Operator", win32com_constants.AddNetRead_Ignore)
+        #anrController.SetConflictAvoidingForAll(10000, "ORG_")
         visum_connection.visum.ApplyModelTransferFile(tra_path, anrController)
 
     def find_stop_pairs_to_search_path(self):
@@ -331,7 +359,7 @@ class ScenarioManagementHelper:
         # Save the transfer file of adding fixed routes back
         self.visum_connection_3.visum.SaveVersion(self.config.error_scenario_fixing_routes_path)
         self.visum_connection_3.visum.GenerateModelTransferFileBetweenVersionFiles(
-            self.config.error_scenario_path,
+            self.config.list_of_scenarios_built_when_adding_each_error_modification[-1],
             self.config.error_scenario_fixing_routes_path,
             self.config.route_fixed_transfer_path,
             LayoutFile="",
@@ -371,16 +399,22 @@ class ScenarioManagementHelper:
                             all(i <= s1 or i >= s2 for s1, s2 in error_stop_pairs_indices)]
             for i in range(len(nodes_to_add)):
                 if stops_to_add[i] != ' ':
-                    stop = visum3.Net.StopPoints.ItemByKey(int(stops_to_add[i]))
-                    route_items.Add(stop)
-                else:
-                    node = visum3.Net.Nodes.ItemByKey(int(nodes_to_add[i]))
-                    route_items.Add(node)
+                    try:
+                        stop = visum3.Net.StopPoints.ItemByKey(int(stops_to_add[i]))
+                        route_items.Add(stop)
+                    except Exception:
+                        logging.info(f"Stop {stops_to_add[i]} not found in the scenario's network.")
+                elif nodes_to_add[i] != ' ':
+                    try:
+                        node = visum3.Net.Nodes.ItemByKey(int(nodes_to_add[i]))
+                        route_items.Add(node)
+                    except Exception:
+                        logging.info(f"Node {nodes_to_add[i]} not found in the scenario's network.")
 
             visum3.Net.AddLineRoute(line_route_key[-1], line, direction_code, route_items, paraR1)
             #screenshot of the fixed route
             route_instance = visum3.Net.LineRoutes.ItemByKey(*line_route_key)
-            screenshot_path = os.path.join(self.config.screenshot_path, (line_route_key[-1] +"-after-fixing.png"))
+            screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] +"-after-fixing.png"))
             stops_marking = []
             for s1, s2 in error_stop_pairs_indices:
                 stops_marking.append(stops[s1])

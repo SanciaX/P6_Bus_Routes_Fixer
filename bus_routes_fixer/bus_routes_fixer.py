@@ -3,19 +3,18 @@
 import logging
 import os
 
-from source_code.directory_config import DirectoryConfig
-from source_code.scenario_management_helper import ScenarioManagementHelper
-from source_code.logger_configuration import setup_logger
-from source_code.visum_connection import VisumConnection
+from bus_routes_fixer.directory_config import DirectoryConfig
+from bus_routes_fixer.scenario_management_helper import ScenarioManagementHelper
+from bus_routes_fixer.logger_configuration import setup_logger
 
 logger = setup_logger()
 
 
 class BusRoutesFixer:
     """Main class to fix bus route errors in Visum."""
-    DEFAULT_CONFIG_PATH = "config/directories.json"
+    DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories_P6_Example.json"
     WORKING_DIRECTORY = os.getcwd()
-    BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "bus_route_fixing_temp")
+    BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "outputs")
 
     def __init__(self, config_path=None):
         """Initializes the BusRoutesFixer with configuration and Visum connections."""
@@ -37,7 +36,7 @@ class BusRoutesFixer:
 
         # Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         # This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
-        self.scenario_management_project.save_fixed_error_modification()
+        self.scenario_management_project.save_fixed_error_modifications()
 
         # Save the transfer file that deletes routes from the working scenario (routeDeletedTransfer.tra) and apply it to a new modification in scenario management
         self.scenario_management_project.save_the_routes_deleting_ver()
@@ -50,10 +49,10 @@ class BusRoutesFixer:
         self.scenario_management_project.add_routes_back()
 
         # Take a screenshot of each error route in the error modification
-        self.scenario_management_project.take_screenshots_in_error_modification()
+        self.scenario_management_project.take_screenshots_in_error_modifications()
 
         ###### SAVE TO SCENARIO MANAGEMENT:
-        self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.working_scenario_modification_list)
+        self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.pre_error_modifications_list, self.scenario_management_project.after_error_modifications_list)
 
         # close the visum instances
         self.close()

@@ -1,0 +1,10 @@
+{
+  "base_path": "bus_routes_fixer/outputs/bus_route_fixer_temp_files",
+  "error_modification_ids": "005, 006",
+  "error_scenario_id": "005",
+  "scenario_management_base_path": "C:/Users/Shanshan Xie/TfL/06 Scenario management/00_Bus_Routes_Fixer_Test_P6_Model",
+  "scenario_management_project_path": "C:/Users/Shanshan Xie/TfL/06 Scenario management/00_Bus_Routes_Fixer_Test_P6_Model/00_Bus_Routes_Fixer_Test_P6_Model.vpdbx",
+  "visum_version": 25,
+  "_note1": "Please refer to the error scenario's message and specify scenario_management_base_path, error_modification_ids & error_scenario_id.",
+  "_note2": "NOTE THAT IF THERE ARE MULTIPLE MODIFICATIONS THAT CAUSED BUS ROUTE ERRORS, LIST ALL OF THEM IN THE ERROR_MODIFICATION_IDS, WITH THE LOADING ORDER OF THESE MODIFICATIONS' IN SCENARIO MANAGEMENT, WITH A COMMA TO SEPARATE EACH TWO MODIFICATION IDS."
+}

@@ -6,14 +6,13 @@ Author: Shanshan Xie, Adam Fradgley & Birendra Shrestha
 Adapted from: P6FixBusRoute30.py (Birendra Shrestha)
 
 Instructions:
-- Step 1: Specify 'scenario_management_base_path', 'scenario_management_project_path' 'error_modification_id' & 'error_scenario_id' in the ../directories.json
+- Step 1: Specify 'scenario_management_base_path', 'scenario_management_project_path' 'error_modification_ids' & 'error_scenario_id' in the ../directories.json
 - Step 2: Run the main script 'bus_routes_fixer.py'
 """
 
 
-from source_code.bus_routes_fixer import main
-
+from ..bus_routes_fixer import main
 
 if __name__ == "__main__":
-    config_path = "config/directories.json"
+    config_path = "bus_routes_fixer/config/directories_P6_Example.json"
     main(config_path)
