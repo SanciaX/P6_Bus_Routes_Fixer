@@ -47,7 +47,7 @@ class DirectoryConfig:
         self.scenarios_path = Path(self.scenario_management_base_path) / "Scenarios"
 
         # Clear files in the screenshots folder if it exists
-        self.screenshots_path = current_path / 'bus_routes_screenshots'
+        self.screenshots_path = current_path / 'bus_routes_fixer/outputs/bus_routes_screenshots'
         if os.path.exists(self.screenshots_path):
             for filename in os.listdir(self.screenshots_path):
                 file_path = os.path.join(self.screenshots_path, filename)
@@ -78,16 +78,14 @@ class DirectoryConfig:
                         shutil.rmtree(file_path)
                 except Exception as e:
                     logging.error(f'Failed to delete {file_path}. Reason: {e}')
-        else:
-            logging.info(f'The path {self.bus_routes_fix_path} does not exist.')
 
         # Create the base path if it does not exist
         Path(self.bus_routes_fix_path).mkdir(exist_ok=True, parents=True)
 
         # Assign IDs
         self.error_scenario_id = directories["error_scenario_id"]
-        self.error_modification_ids_str = directories["error_modification_ids"]
-        self.error_modification_ids = [str(int(x.strip())).zfill(6) for x in self.error_modification_ids_str.split(',')]
+        self.first_error_modification_id_str = directories["id_of_the_1st_error_modification"]
+        self.first_error_modification_id = str(int(self.first_error_modification_id_str.strip())).zfill(6)
 
         # Define specific files using relative paths
         self.scenario_management_path = self.scenario_management_base_path / '00_Bus_Routes_Fixer_Test_P6_Model.vpdbx'
@@ -102,15 +100,6 @@ class DirectoryConfig:
         self.route_fixed_transfer_path = self.bus_routes_fix_path / 'fixedRouteAddedTransfer.tra'
         self.debug_log_path = self.bus_routes_fix_path / 'debug.log'
         self.derived_data_log_path = self.bus_routes_fix_path / 'Notes_for_Visum_Modeller.log'
-        self.list_of_error_modification_paths = [
-                self.modifications_path / f"M{int(error_modification_id):06d}.tra"
-                for error_modification_id in self.error_modification_ids
-            ]
-        self.list_of_scenarios_built_when_adding_each_error_modification = [
-            self.bus_routes_fix_path / f"Scenario_for_M{int(error_modification_id):06d}.ver"
-            for error_modification_id in self.error_modification_ids
-            ]
-        self.list_fixed_error_modification_paths = [
-            self.bus_routes_fix_path / f"Fixed_{int(error_modification_id):06d}.tra"
-            for error_modification_id in self.error_modification_ids
-            ]
+        self.list_of_modification_since_the_1st_error_paths = []
+        self.list_of_scenarios_built_when_adding_each_error_modification = []
+        self.list_fixed_error_modification_paths = []

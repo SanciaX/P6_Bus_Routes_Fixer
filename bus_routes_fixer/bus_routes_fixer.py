@@ -49,10 +49,10 @@ class BusRoutesFixer:
         self.scenario_management_project.add_routes_back()
 
         # Take a screenshot of each error route in the error modification
-        self.scenario_management_project.take_screenshots_in_error_modifications()
+        self.scenario_management_project.take_screenshots_in_modifications()
 
         ###### SAVE TO SCENARIO MANAGEMENT:
-        self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.pre_error_modifications_list, self.scenario_management_project.after_error_modifications_list)
+        self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.list_of_mods_pre_1st_error, self.scenario_management_project.list_of_mods_from_1st_error)
 
         # close the visum instances
         self.close()

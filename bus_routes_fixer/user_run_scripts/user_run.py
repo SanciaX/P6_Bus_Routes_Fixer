@@ -6,7 +6,7 @@ Author: Shanshan Xie, Adam Fradgley & Birendra Shrestha
 Adapted from: P6FixBusRoute30.py (Birendra Shrestha)
 
 Instructions:
-- Step 1: Specify 'scenario_management_base_path', 'scenario_management_project_path' 'error_modification_ids' & 'error_scenario_id' in the ../directories.json
+- Step 1: Specify 'scenario_management_base_path', 'scenario_management_project_path' 'first_error_modification_id' & 'error_scenario_id' in the ../directories.json
 - Step 2: Run the main script 'bus_routes_fixer.py'
 """
 
