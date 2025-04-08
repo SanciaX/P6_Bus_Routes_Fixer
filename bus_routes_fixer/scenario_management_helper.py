@@ -177,10 +177,12 @@ class ScenarioManagementHelper:
         shutil.copy2(path_str, deleting_routes_mod_path)
 
         # generate a modification that is copied from the error modification but ignores data about the problematic routes
+        middle_mod_list = []
         for i in range(len(list_of_mods_from_1st_error)):
             code = f"Add  M{int(self.list_of_mods_from_1st_error[i]):06d} to " + self.config.error_scenario_id_str
             added_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
                                                                                    "With no deleted error routes related data")
+            middle_mod_list.append(mod_i_id)
             path_str = self.config.list_of_modification_since_the_1st_error_paths[i].as_posix()
             shutil.copy2(path_str, mod_i_path)
 
@@ -189,9 +191,9 @@ class ScenarioManagementHelper:
         path_str = self.config.route_fixed_transfer_path.as_posix()
         shutil.copy2(path_str, adding_routes_mod_path)
         deleting_routes_mod_id_str = str(deleting_routes_mod_id)
-        list_of_mods_from_1st_error_str = list(map(str, list_of_mods_from_1st_error))
+        middle_mods_list_str = list(map(str, middle_mod_list))
         adding_routes_mod_id_str = str(adding_routes_mod_id)
-        list_of_mods_after_deleting_routes = [deleting_routes_mod_id_str] + list_of_mods_from_1st_error_str + [adding_routes_mod_id_str]
+        list_of_mods_after_deleting_routes = [deleting_routes_mod_id_str] + middle_mods_list_str + [adding_routes_mod_id_str]
         final_mod_list_str = ",".join(list_of_mods_pre_1st_error + list_of_mods_after_deleting_routes)
         logging.info("The scenario fixed has the following modifications: " + final_mod_list_str)
         code = "Bus Route Fixed for Scenario " + self.config.error_scenario_id_str
