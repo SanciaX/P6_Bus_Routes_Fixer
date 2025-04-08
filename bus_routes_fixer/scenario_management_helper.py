@@ -17,8 +17,8 @@ class ScenarioManagementHelper:
         self.com_constants = win32com.client.constants
         self.config = config
         self.project = self.visum_connection_1.visum.ScenarioManagement.OpenProject(project_path)
-        self.pre_error_modifications_list = []
-        self.after_error_modifications_list = []
+        self.list_of_mods_pre_1st_error = []
+        self.list_of_mods_from_1st_error = []
         self.error_routes_dict = {}
         self.error_scenario = None
 
@@ -38,14 +38,17 @@ class ScenarioManagementHelper:
         """
         error_scenario = self.project.Scenarios.ItemByKey(config.error_scenario_id)
 
-        old_mod_list_str = error_scenario.AttValue("MODIFICATIONS")
-        mod_list = old_mod_list_str.split(',')
-        for mod in mod_list:
-            if int(mod) < int(config.error_modification_ids[0]):
-                self.pre_error_modifications_list.append(mod)
-            if int(mod) > int(config.error_modification_ids[-1]):
-                self.after_error_modifications_list.append(mod)
-        working_mod_list = ','.join(self.pre_error_modifications_list)
+        error_scenario_mod_list_str = error_scenario.AttValue("MODIFICATIONS")
+        error_scenario_mod_list = error_scenario_mod_list_str.split(',')
+        for mod in error_scenario_mod_list:
+            if int(mod) < int(config.first_error_modification_id):
+                self.list_of_mods_pre_1st_error.append(mod)
+            if int(mod) >= int(config.first_error_modification_id):
+                self.list_of_mods_from_1st_error.append(mod)
+                self.config.list_of_modification_since_the_1st_error_paths = [self.config.modifications_path / f"M{int(mod_id):06d}.tra" for mod_id in self.list_of_mods_from_1st_error]
+                self.config.list_of_scenarios_built_when_adding_each_error_modification = [self.config.bus_routes_fix_path / f"Scenario_for_M{int(mod_id):06d}.ver" for mod_id in self.list_of_mods_from_1st_error]
+                self.config.list_fixed_error_modification_paths = [self.config.bus_routes_fix_path / f"Fixed_{int(error_modification_id):06d}.tra" for error_modification_id in self.list_of_mods_from_1st_error]
+        working_mod_list = ','.join(self.list_of_mods_pre_1st_error)
         working_scenario = self.add_scenario(working_mod_list, config.scenarios_path, "Deselect the modification causing error")
         working_scenario.LoadInput()
         self.visum_connection_1.visum.SaveVersion(config.working_scenario_path)
@@ -111,8 +114,8 @@ class ScenarioManagementHelper:
         # Save the .ver with error routes deleted from the network before loading the modification causing errors
         self.visum_connection_1.visum.SaveVersion(self.config.working_scenario_delete_routes_path)
         # Apply the error modification with an anrController.SetWhatToDo parameter that ignore conflicting LineRouteItem data, so that when load ing the error modification, if the error modification contains data about routes just deleted, there wouldn't be error
-        for i in range(len(self.config.list_of_error_modification_paths)):
-            self.apply_model_transfer(self.visum_connection_1, self.config.list_of_error_modification_paths[i])
+        for i in range(len(self.config.list_of_modification_since_the_1st_error_paths)):
+            self.apply_model_transfer(self.visum_connection_1, self.config.list_of_modification_since_the_1st_error_paths[i])
         # Save the Error Scenario Model with the error routes deleted
             self.visum_connection_1.visum.SaveVersion(self.config.list_of_scenarios_built_when_adding_each_error_modification[i])
         # Save the copy of the error modification that has already ignored data of already deleted error routes
@@ -155,8 +158,8 @@ class ScenarioManagementHelper:
             WriteLayoutIntoModelTransferFile=True,
         )
 
-    def take_screenshots_in_error_modifications(self):
-        for error_modification_id in self.config.error_modification_ids:
+    def take_screenshots_in_modifications(self):
+        for error_modification_id in self.list_of_mods_from_1st_error:
             error_modification = int(error_modification_id)
             error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
             error_modification_only_scenario.LoadInput()
@@ -166,7 +169,7 @@ class ScenarioManagementHelper:
                 screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] + f"-in_the_error_modification-{error_modification_id}.png"))
                 self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
 
-    def save_to_scenario_manager(self, pre_error_modifications_list, after_error_modifications_list):
+    def save_to_scenario_manager(self, list_of_mods_pre_1st_error, list_of_mods_from_1st_error):
         # generate a modification that deletes the problematic routes (i.e. apply routeDeletedTransfer.tra)
         code = "Delete Problematic Routes for Scenario " + self.config.error_scenario_id_str
         deleting_routes_mod_instance, deleting_routes_mod_path, deleting_routes_mod_name, deleting_routes_mod_id = self.add_modification(code, "Delete problematic routes")
@@ -174,13 +177,11 @@ class ScenarioManagementHelper:
         shutil.copy2(path_str, deleting_routes_mod_path)
 
         # generate a modification that is copied from the error modification but ignores data about the problematic routes
-        middle_mod_list = []
-        for i in range(len(self.config.error_modification_ids)):
-            code = f"Add  M{int(self.config.error_modification_ids[i]):06d} to " + self.config.error_scenario_id_str
-            middle_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
+        for i in range(len(list_of_mods_from_1st_error)):
+            code = f"Add  M{int(self.list_of_mods_from_1st_error[i]):06d} to " + self.config.error_scenario_id_str
+            added_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
                                                                                    "With no deleted error routes related data")
-            middle_mod_list.append(mod_i_id)
-            path_str = self.config.list_fixed_error_modification_paths[i].as_posix()
+            path_str = self.config.list_of_modification_since_the_1st_error_paths[i].as_posix()
             shutil.copy2(path_str, mod_i_path)
 
         # generate a modification that adds the fixed routes
@@ -188,18 +189,15 @@ class ScenarioManagementHelper:
         path_str = self.config.route_fixed_transfer_path.as_posix()
         shutil.copy2(path_str, adding_routes_mod_path)
         deleting_routes_mod_id_str = str(deleting_routes_mod_id)
-        middle_mod_list_str = list(map(str, middle_mod_list))
+        list_of_mods_from_1st_error_str = list(map(str, list_of_mods_from_1st_error))
         adding_routes_mod_id_str = str(adding_routes_mod_id)
-        mid_mods_list = [deleting_routes_mod_id_str] + middle_mod_list_str + [adding_routes_mod_id_str]
-        if after_error_modifications_list:
-            final_mod_list_str = ",".join(pre_error_modifications_list + mid_mods_list + after_error_modifications_list)
-        else:
-            final_mod_list_str = ",".join(pre_error_modifications_list + mid_mods_list)
+        list_of_mods_after_deleting_routes = [deleting_routes_mod_id_str] + list_of_mods_from_1st_error_str + [adding_routes_mod_id_str]
+        final_mod_list_str = ",".join(list_of_mods_pre_1st_error + list_of_mods_after_deleting_routes)
         logging.info("The scenario fixed has the following modifications: " + final_mod_list_str)
         code = "Bus Route Fixed for Scenario " + self.config.error_scenario_id_str
         cur_scenario = self.add_scenario(final_mod_list_str, self.config.scenarios_path, code)
         cur_scenario.LoadInput()
-        for i in range(len(self.config.error_modification_ids)):
+        for i in range(len(self.list_of_mods_from_1st_error)):
             self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2 - i)
         self.project.RemoveScenario(cur_scenario.AttValue("NO") - 1)
 

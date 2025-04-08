@@ -4,10 +4,12 @@ from datetime import datetime
 
 
 def setup_logger():
-    if not os.path.exists("log"):
-        os.makedirs("log")
+    log_directory = os.path.join(os.getcwd(), 'bus_routes_fixer', 'outputs', 'log')
+    # Check if the directory exists, and create it if it does not
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
     logging.basicConfig(
-        filename=f"log/{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}_bus_routes_fixer.log",
+        filename=f"bus_routes_fixer/outputs/log/{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}_bus_routes_fixer.log",
         level=logging.INFO,
         format="[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
