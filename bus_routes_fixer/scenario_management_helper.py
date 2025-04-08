@@ -179,7 +179,7 @@ class ScenarioManagementHelper:
         # generate a modification that is copied from the error modification but ignores data about the problematic routes
         middle_mod_list = []
         for i in range(len(list_of_mods_from_1st_error)):
-            code = f"Add  M{int(self.list_of_mods_from_1st_error[i]):06d} to " + self.config.error_scenario_id_str
+            code = f"Add  M{int(self.list_of_mods_from_1st_error[i]):06d} back without reading error route data "
             added_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
                                                                                    "With no deleted error routes related data")
             middle_mod_list.append(mod_i_id)
