@@ -45,9 +45,12 @@ class ScenarioManagementHelper:
                 self.list_of_mods_pre_1st_error.append(mod)
             if int(mod) >= int(config.first_error_modification_id):
                 self.list_of_mods_from_1st_error.append(mod)
-                self.config.list_of_modification_since_the_1st_error_paths = [self.config.modifications_path / f"M{int(mod_id):06d}.tra" for mod_id in self.list_of_mods_from_1st_error]
-                self.config.list_of_scenarios_built_when_adding_each_error_modification = [self.config.bus_routes_fix_path / f"Scenario_for_M{int(mod_id):06d}.ver" for mod_id in self.list_of_mods_from_1st_error]
-                self.config.list_fixed_error_modification_paths = [self.config.bus_routes_fix_path / f"Fixed_{int(error_modification_id):06d}.tra" for error_modification_id in self.list_of_mods_from_1st_error]
+                #self.config.list_of_modifications_since_the_1st_error_paths.append(self.config.modifications_path / f"M{int(mod):06d}.tra")
+                #self.config.list_of_scenarios_built_when_adding_each_error_modification.append(self.config.temp_files_path / f"Scenario_for_M{int(mod):06d}.ver")
+                #self.config.list_fixed_error_modification_paths.append(self.config.temp_files_path / f"Fixed_{int(mod):06d}.tra")
+        self.config.list_of_modifications_since_the_1st_error_paths = [self.config.modifications_path / f"M{int(mod_id):06d}.tra" for mod_id in self.list_of_mods_from_1st_error]
+        self.config.list_of_scenarios_built_when_adding_each_error_modification = [self.config.temp_files_path / f"Scenario_for_M{int(mod_id):06d}.ver" for mod_id in self.list_of_mods_from_1st_error]
+        self.config.list_fixed_error_modification_paths = [self.config.temp_files_path / f"Fixed_{int(error_modification_id):06d}.tra" for error_modification_id in self.list_of_mods_from_1st_error]
         working_mod_list = ','.join(self.list_of_mods_pre_1st_error)
         working_scenario = self.add_scenario(working_mod_list, config.scenarios_path, "Deselect the modification causing error")
         working_scenario.LoadInput()
@@ -106,7 +109,7 @@ class ScenarioManagementHelper:
             logging.error(f"Error retrieving route items for {line_route_key[-1]}")
         return nodes, stops
 
-    def save_fixed_error_modifications(self):
+    def save_fixed_modifications(self):
         """
         Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
@@ -114,8 +117,8 @@ class ScenarioManagementHelper:
         # Save the .ver with error routes deleted from the network before loading the modification causing errors
         self.visum_connection_1.visum.SaveVersion(self.config.working_scenario_delete_routes_path)
         # Apply the error modification with an anrController.SetWhatToDo parameter that ignore conflicting LineRouteItem data, so that when load ing the error modification, if the error modification contains data about routes just deleted, there wouldn't be error
-        for i in range(len(self.config.list_of_modification_since_the_1st_error_paths)):
-            self.apply_model_transfer(self.visum_connection_1, self.config.list_of_modification_since_the_1st_error_paths[i])
+        for i in range(len(self.config.list_of_modifications_since_the_1st_error_paths)):
+            self.apply_model_transfer(self.visum_connection_1, self.config.list_of_modifications_since_the_1st_error_paths[i])
         # Save the Error Scenario Model with the error routes deleted
             self.visum_connection_1.visum.SaveVersion(self.config.list_of_scenarios_built_when_adding_each_error_modification[i])
         # Save the copy of the error modification that has already ignored data of already deleted error routes
@@ -166,12 +169,12 @@ class ScenarioManagementHelper:
             #Take a screenshot of each error route in the error modification
             for line_route_key in self.error_routes_dict.keys():
                 route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
-                screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] + f"-in_the_error_modification-{error_modification_id}.png"))
+                screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] + f"-in_Modification-{error_modification_id}.png"))
                 self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
 
     def save_to_scenario_manager(self, list_of_mods_pre_1st_error, list_of_mods_from_1st_error):
         # generate a modification that deletes the problematic routes (i.e. apply routeDeletedTransfer.tra)
-        code = "Delete Problematic Routes for Scenario " + self.config.error_scenario_id_str
+        code = "NEW-MODIFICATION_Delete Problematic Routes for Scenario " + self.config.error_scenario_id_str
         deleting_routes_mod_instance, deleting_routes_mod_path, deleting_routes_mod_name, deleting_routes_mod_id = self.add_modification(code, "Delete problematic routes")
         path_str = self.config.route_deleted_transfer_path.as_posix()
         shutil.copy2(path_str, deleting_routes_mod_path)
@@ -179,15 +182,15 @@ class ScenarioManagementHelper:
         # generate a modification that is copied from the error modification but ignores data about the problematic routes
         middle_mod_list = []
         for i in range(len(list_of_mods_from_1st_error)):
-            code = f"Add  M{int(self.list_of_mods_from_1st_error[i]):06d} back without reading error route data "
+            code = f"NEW-MODIFICATION_Add M{int(self.list_of_mods_from_1st_error[i]):06d} back without reading error route data "
             added_mod_instance, mod_i_path, mod_i_name, mod_i_id = self.add_modification(code,
                                                                                    "With no deleted error routes related data")
             middle_mod_list.append(mod_i_id)
-            path_str = self.config.list_of_modification_since_the_1st_error_paths[i].as_posix()
+            path_str = self.config.list_fixed_error_modification_paths[i].as_posix()
             shutil.copy2(path_str, mod_i_path)
 
         # generate a modification that adds the fixed routes
-        adding_routes_mod_instance, adding_routes_mod_path, adding_routes_mod_name, adding_routes_mod_id = self.add_modification("Problematic Routes Re-added", "Have the deleted problematic routes fixed and re-added to the erroneous scenario's network")
+        adding_routes_mod_instance, adding_routes_mod_path, adding_routes_mod_name, adding_routes_mod_id = self.add_modification("NEW-MODIFICATION_Problematic Routes Re-added", "Have the deleted problematic routes fixed and re-added to the erroneous scenario's network")
         path_str = self.config.route_fixed_transfer_path.as_posix()
         shutil.copy2(path_str, adding_routes_mod_path)
         deleting_routes_mod_id_str = str(deleting_routes_mod_id)
@@ -220,7 +223,7 @@ class ScenarioManagementHelper:
         new_modification.SetAttValue("Description", description)
         new_mode_id = int(new_modification.AttValue("No"))
         mod_name = new_modification.AttValue("TraFile")
-        str_path = self.config.scenario_management_base_path.as_posix()
+        str_path = self.config.scenario_management_temp_files_path.as_posix()
         mod_path = os.path.join(str_path, "Modifications", mod_name)
         return new_modification, mod_path, mod_name, new_mode_id
 
