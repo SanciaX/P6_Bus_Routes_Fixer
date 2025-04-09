@@ -58,8 +58,6 @@ class DirectoryConfig:
                         shutil.rmtree(file_path)
                 except Exception as e:
                     logging.error(f'Failed to delete {file_path}. Reason: {e}')
-        else:
-            logging.info(f'The path {self.screenshots_path} does not exist.')
             
         # screenshot gpas' paths
         self.gpa_path = current_path / 'bus_routes_fixer/resources/bus_route_fixer.gpa'
