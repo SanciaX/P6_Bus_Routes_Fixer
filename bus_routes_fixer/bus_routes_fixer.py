@@ -12,7 +12,7 @@ logger = setup_logger()
 
 class BusRoutesFixer:
     """Main class to fix bus route errors in Visum."""
-    DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories_P6_Example.json"
+    DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories.json"
     WORKING_DIRECTORY = os.getcwd()
     BUS_ROUTES_FIXING_DIRECTORY = os.path.join(WORKING_DIRECTORY, "outputs")
 
@@ -29,20 +29,24 @@ class BusRoutesFixer:
 
         ###### IDENTIFY ERRORS:
         # Identify the modification causing errors and create a new scenario containing the modifications before the error occurs and save the workingscenario.ver file
+        logging.info("Starting reading scenario management.")
         self.scenario_management_project.read_scenario_management(self.config)
         # Save route items along the error routes in the network before loading the error modification
         # Note: visum_connection1 is used to delete the error routes and save the routes_deleting_ver as a new modification, visum_connection2 keeps these error routes so that we can get routes' and routeitems' attributes from its connection
+        logging.info("Starting saving error route instance.")
         self.scenario_management_project.save_error_routes()
 
         # Create fixedErrorModificationFile.tra, which is a copy of the error modification but with no info. about the error routes already deleted from the network.
         # This is to avoid errors that may occur when loading the error modification if the original error modification .tra contains data about error routes that are already deleted
-        self.scenario_management_project.save_fixed_error_modifications()
+        logging.info("Starting saving fixed modifications.")
+        self.scenario_management_project.save_fixed_modifications()
 
         # Save the transfer file that deletes routes from the working scenario (routeDeletedTransfer.tra) and apply it to a new modification in scenario management
         self.scenario_management_project.save_the_routes_deleting_ver()
 
         ###### FIX ERRORS
         # Use the network of the error scenario to find problematic link(s) along error route(s)
+        logging.info("Starting fix line route errors.")
         self.scenario_management_project.find_stop_pairs_to_search_path()
 
         # Generate the transfer file that adds the fixed routes back
@@ -52,6 +56,7 @@ class BusRoutesFixer:
         self.scenario_management_project.take_screenshots_in_modifications()
 
         ###### SAVE TO SCENARIO MANAGEMENT:
+        logging.info("Starting creating the final scenario with fixed line routes.")
         self.scenario_management_project.save_to_scenario_manager(self.scenario_management_project.list_of_mods_pre_1st_error, self.scenario_management_project.list_of_mods_from_1st_error)
 
         # close the visum instances

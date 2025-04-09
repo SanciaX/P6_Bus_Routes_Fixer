@@ -51,9 +51,9 @@ pip install -r requirements.txt
 
   1) ID of the scenario with route error(s) (error_scenario_id), identified in step 3; 
 
-  2) ID of the first modification causing errors (error_modification_id), identified in from the error message. 
+  2) ID of the first modification causing errors (id_of_the_1st_error_modification), identified in from the error message;
 
-  3) Path of your scenario management (scenario_management_base_path) and  
+  3) Path of your scenario management (scenario_management_temp_files_path); and  
 
   4) Path of the scenario management file(.vpdbx) (scenario_management_project_path). 
 
