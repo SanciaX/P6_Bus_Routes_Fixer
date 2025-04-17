@@ -27,4 +27,4 @@ if __name__ == "__main__":
     stats = pstats.Stats(profiler)
     stats.strip_dirs()  # Clean up file paths
     stats.sort_stats("time")  # Sort by time spent in each function
-    stats.print_stats(20)  # Print the top 20 results
+    stats.print_stats(50)  # Print the top 50 results

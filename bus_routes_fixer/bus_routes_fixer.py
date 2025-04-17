@@ -46,10 +46,11 @@ class BusRoutesFixer:
 
         ###### FIX ERRORS
         # Use the network of the error scenario to find problematic link(s) along error route(s)
-        logging.info("Starting fix line route errors.")
+        logging.info("Starting identifying line route errors.")
         self.scenario_management_project.find_stop_pairs_to_search_path()
 
         # Generate the transfer file that adds the fixed routes back
+        logging.info("Starting adding routes back.")
         self.scenario_management_project.add_routes_back()
 
         # Take a screenshot of each error route in the error modification
