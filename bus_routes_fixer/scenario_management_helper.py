@@ -74,6 +74,7 @@ class ScenarioManagementHelper:
                 line_route_key_set.add((line_name, line_route_direction, line_route_name))
 
         self.visum_connection_1.visum.LoadVersion(self.config.working_scenario_path)
+        self.visum_connection_1.visum.Net.GraphicParameters.Open(self.config.prior_error_gpa_path)
         for line_route_key in line_route_key_set:
             nodes, stops = ScenarioManagementHelper.get_route_items(line_route_key, self.visum_connection_2)
             self.error_routes_dict[line_route_key] = {
@@ -86,7 +87,7 @@ class ScenarioManagementHelper:
 
             # Take a screenshot of the route before removing it
             screenshot_path = os.path.join(self.config.screenshots_path, f"{line_route_key[-1]}-pre-errors.png")
-            self.take_screenshot(self.visum_connection_1, route_to_remove, screenshot_path, self.config.prior_error_gpa_path)
+            self.take_screenshot(self.visum_connection_1, route_to_remove, screenshot_path)
 
             # Remove the error line route from Visum_1
             self.visum_connection_1.visum.Net.RemoveLineRoute(route_to_remove)
@@ -94,7 +95,6 @@ class ScenarioManagementHelper:
     @staticmethod
     def get_route_items(line_route_key, visum_connection):
         """Retrieves nodes and stops."""
-        #line_name, line_route_direction, line_route_name = line_route_key
         stops = []
         nodes = []
         lineroute = visum_connection.visum.Net.LineRoutes.ItemByKey(*line_route_key)
@@ -162,15 +162,29 @@ class ScenarioManagementHelper:
         )
 
     def take_screenshots_in_modifications(self):
-        for error_modification_id in self.list_of_mods_from_1st_error:
+        #take screenshots in the first error modification
+        error_modification_id = self.list_of_mods_from_1st_error[0]
+        error_modification = int(error_modification_id)
+        error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
+        error_modification_only_scenario.LoadInput()
+        self.visum_connection_1.visum.Net.GraphicParameters.Open(self.config.error_modification_gpa_path)
+        for line_route_key in self.error_routes_dict.keys():
+            route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
+            screenshot_path = os.path.join(self.config.screenshots_path,
+                                           (line_route_key[-1] + f"-in_Modification-{error_modification_id}.png"))
+            self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path)
+        #take screenshots in the last modification before fixing line routes
+        if len(self.list_of_mods_from_1st_error) > 1:
+            error_modification_id = self.list_of_mods_from_1st_error[-1]
             error_modification = int(error_modification_id)
             error_modification_only_scenario = self.add_scenario(error_modification, self.config.scenarios_path)
             error_modification_only_scenario.LoadInput()
-            #Take a screenshot of each error route in the error modification
+            self.visum_connection_1.visum.Net.GraphicParameters.Open(self.config.error_modification_gpa_path)
             for line_route_key in self.error_routes_dict.keys():
                 route_instance = self.visum_connection_1.visum.Net.LineRoutes.ItemByKey(*line_route_key)
-                screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] + f"-in_Modification-{error_modification_id}.png"))
-                self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path, self.config.error_modification_gpa_path)
+                screenshot_path = os.path.join(self.config.screenshots_path,
+                                               (line_route_key[-1] + f"-in_Modification-{error_modification_id}.png"))
+                self.take_screenshot(self.visum_connection_1, route_instance, screenshot_path)
 
     def save_to_scenario_manager(self, list_of_mods_pre_1st_error, list_of_mods_from_1st_error):
         # generate a modification that deletes the problematic routes (i.e. apply routeDeletedTransfer.tra)
@@ -202,8 +216,8 @@ class ScenarioManagementHelper:
         code = "Bus Route Fixed for Scenario " + self.config.error_scenario_id_str
         cur_scenario = self.add_scenario(final_mod_list_str, self.config.scenarios_path, code)
         cur_scenario.LoadInput()
-        for i in range(len(self.list_of_mods_from_1st_error)):
-            self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2 - i)
+        self.project.RemoveScenario(cur_scenario.AttValue("NO") - 3)
+        self.project.RemoveScenario(cur_scenario.AttValue("NO") - 2)
         self.project.RemoveScenario(cur_scenario.AttValue("NO") - 1)
 
     def add_scenario(self, modifications, scenarios_path, code = ' '):
@@ -357,6 +371,7 @@ class ScenarioManagementHelper:
         # For each error route
         for line_route_key in self.error_routes_dict.keys():
             # Add the fixed line_route_key back, ignoring the LineRouteItems in between each pair of bus stops between which there are link/turn error(s)
+
             self._add_each_route_back(line_route_key, self.visum_connection_3)
 
         # Save the transfer file of adding fixed routes back
@@ -375,10 +390,11 @@ class ScenarioManagementHelper:
         try:
             visum3 = visum_connection.visum
             line = visum3.Net.Lines.ItemByKey(line_route_key[0])
-            direction_code = visum3.Net.Directions.GetAll[0]
-            for dirTo in visum3.Net.Directions.GetAll:
-                if dirTo.AttValue("CODE") == line_route_key[1]:
-                    direction_code = dirTo
+            # Cache directions and find the matching direction code
+            directions = visum3.Net.Directions.GetAll
+            direction_code = next((dirTo for dirTo in directions if dirTo.AttValue("CODE") == line_route_key[1]),
+                                  directions[0])
+
             paraR1 = visum3.IO.CreateNetReadRouteSearchTSys()  # create the parameter object
             paraR1.SetAttValue("HowToHandleIncompleteRoute", 2)  # search the shortest path if line route has gaps
             paraR1.SetAttValue("ShortestPathCriterion",
@@ -390,55 +406,53 @@ class ScenarioManagementHelper:
             paraR1.SetAttValue("WhatToDoIfShortestPathNotFound",
                                0)  # 0 Do not read ; 2 Insert link if necessary ; 1 Open link or turn for transport system
 
-            route_items = visum3.CreateNetElements()
+            # Cache route data
+            route_data = self.error_routes_dict[line_route_key]
+            nodes, stops, error_stop_pairs_indices = route_data['nodes'], route_data['stops'], route_data[
+                'error_stop_pairs_indices']
 
-            nodes = self.error_routes_dict[line_route_key]['nodes']
-            stops = self.error_routes_dict[line_route_key]['stops']
-            error_stop_pairs_indices = self.error_routes_dict[line_route_key]['error_stop_pairs_indices']
-
+            # Filter nodes and stops to add
             nodes_to_add = [n for i, n in enumerate(nodes) if
                             all(i <= s1 or i >= s2 for s1, s2 in error_stop_pairs_indices)]
             stops_to_add = [s for i, s in enumerate(stops) if
                             all(i <= s1 or i >= s2 for s1, s2 in error_stop_pairs_indices)]
-            for i in range(len(nodes_to_add)):
-                if stops_to_add[i] != ' ':
-                    try:
-                        stop = visum3.Net.StopPoints.ItemByKey(int(stops_to_add[i]))
-                        route_items.Add(stop)
-                    except Exception:
-                        logging.info(f"Stop {stops_to_add[i]} not found in the scenario's network.")
-                elif nodes_to_add[i] != ' ':
-                    try:
-                        node = visum3.Net.Nodes.ItemByKey(int(nodes_to_add[i]))
-                        route_items.Add(node)
-                    except Exception:
-                        logging.info(f"Node {nodes_to_add[i]} not found in the scenario's network.")
 
+            # Add elements to route_items
+            route_items = visum3.CreateNetElements()
+            for node, stop in zip(nodes_to_add, stops_to_add):
+                if stop != ' ':
+                    try:
+                        route_items.Add(visum3.Net.StopPoints.ItemByKey(int(stop)))
+                    except Exception:
+                        logging.info(f"Stop {stop} not found in the scenario's network.")
+                elif node != ' ':
+                    try:
+                        route_items.Add(visum3.Net.Nodes.ItemByKey(int(node)))
+                    except Exception:
+                        logging.info(f"Node {node} not found in the scenario's network.")
+
+            # Add the fixed route to the network
             visum3.Net.AddLineRoute(line_route_key[-1], line, direction_code, route_items, paraR1)
-            #screenshot of the fixed route
+
+            # Take a screenshot of the fixed route
             route_instance = visum3.Net.LineRoutes.ItemByKey(*line_route_key)
             screenshot_path = os.path.join(self.config.screenshots_path, (line_route_key[-1] +"-after-fixing.png"))
-            stops_marking = []
-            for s1, s2 in error_stop_pairs_indices:
-                stops_marking.append(stops[s1])
-                stops_marking.append(stops[s2])
-            self.take_screenshot(visum_connection, route_instance, screenshot_path,
-                                 self.config.after_fixing_gpa_path, stops_marking)
+            stops_marking = [stops[s1] for s1, s2 in error_stop_pairs_indices] + [stops[s2] for s1, s2 in
+                                                                                  error_stop_pairs_indices]
+            visum_connection.visum.Net.GraphicParameters.Open(self.config.after_fixing_gpa_path)
+            self.take_screenshot(visum_connection, route_instance, screenshot_path, stops_marking)
 
         except Exception:
             logging.info(f"Not be able to generate a fixed route for route {line_route_key[-1]}.")
 
     @staticmethod
-    def take_screenshot(visum_connection, route_instance, screenshotpath, gpa_path, stops_marking =None):
+    def take_screenshot(visum_connection, route_instance, screenshotpath, stops_marking = None):
         """Takes a screenshot of the bus route."""
-        # bus_route_fixer.gpa: show activate bus route(s) only; show marked nodes.
-        visum_connection.visum.Net.GraphicParameters.Open(gpa_path)
+        # bus_route_fixer.gpa: show activate bus route(s) only; show marked stops.
         visum_connection.visum.Graphic.Autozoom(route_instance)
-        for r in visum_connection.visum.Net.LineRoutes.GetAll:
-            if r.AttValue("NAME") != route_instance.AttValue("NAME"):
-                r.Active = False
-            else:
-                r.Active = True
+        visum_connection.visum.Net.LineRoutes.SetPassive()
+        route_instance.Active = True
+
         if stops_marking:
             visum_connection.visum.Net.Marking.ObjectType = 13
             for stop_no in stops_marking:
