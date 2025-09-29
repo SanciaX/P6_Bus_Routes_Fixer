@@ -10,13 +10,13 @@ import os
 
 
 class ScenarioManagementHelper:
-    def __init__(self, project_path, config):
+    def __init__(self, config):
         self.visum_connection_1 = VisumConnection(25) # visum_connection_1 is linked to the scenario management project
         self.visum_connection_2 = VisumConnection(25) # visum_connection_2 is linked to scenarioWorking.ver
         self.visum_connection_3 = VisumConnection(25) # # visum_connection_3 is linked to scenarioError.ver
         self.com_constants = win32com.client.constants
         self.config = config
-        self.project = self.visum_connection_1.visum.ScenarioManagement.OpenProject(project_path)
+        self.project = self.visum_connection_1.visum.ScenarioManagement.OpenProject(config.scenario_management_project_path)
         self.list_of_mods_pre_1st_error = []
         self.list_of_mods_from_1st_error = []
         self.error_routes_dict = {}

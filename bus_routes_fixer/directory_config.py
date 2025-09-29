@@ -5,7 +5,6 @@ import logging
 import shutil
 
 
-
 class DirectoryConfig:
     _instance = None
     DEFAULT_CONFIG_PATH = "bus_routes_fixer/config/directories.json"
@@ -86,7 +85,6 @@ class DirectoryConfig:
         self.first_error_modification_id = str(int(self.first_error_modification_id_str.strip())).zfill(6)
 
         # Define specific files using relative paths
-        self.scenario_management_path = self.scenario_management_temp_files_path / '00_Bus_Routes_Fixer_Test_P6_Model.vpdbx'
         self.error_scenario_id_str = f"S{str(self.error_scenario_id).zfill(6)}"
         self.error_message_path = self.scenarios_path / self.error_scenario_id_str
         self.error_message_path = self.error_message_path / 'Messages.txt'

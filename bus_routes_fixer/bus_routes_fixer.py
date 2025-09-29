@@ -1,5 +1,3 @@
-
-
 import logging
 import os
 
@@ -21,7 +19,7 @@ class BusRoutesFixer:
         if not config_path:
             config_path = self.DEFAULT_CONFIG_PATH
         self.config = DirectoryConfig(config_path) # Creates and loads the configuration
-        self.scenario_management_project = ScenarioManagementHelper(self.config.scenario_management_path, self.config)
+        self.scenario_management_project = ScenarioManagementHelper(self.config)
 
     def run_fixer(self):
         """Main function to identify and fix bus route errors."""
