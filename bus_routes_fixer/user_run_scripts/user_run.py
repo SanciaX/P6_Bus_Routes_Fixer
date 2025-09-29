@@ -13,7 +13,7 @@ Instructions:
 import cProfile
 import pstats
 
-from ..bus_routes_fixer import main
+from bus_routes_fixer.bus_routes_fixer import main
 
 if __name__ == "__main__":
     profiler = cProfile.Profile()
