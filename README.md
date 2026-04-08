@@ -49,7 +49,7 @@ pip install -r requirements.txt
 - Identify the ID of the scenario you want to fix in Visum. From the error message of this scenario, find the ID of the first modification causing the error.
 - Open `../bus_routes_fixer/config/directories.json`, specify the values of the following variables: 
 
-  1) ID of the scenario with route error(s) (error_scenario_id), identified in step 3; 
+  1) ID of the scenario with route error(s) (error_scenario_id), identified in last step; 
 
   2) ID of the first modification causing errors (id_of_the_1st_error_modification), identified in from the error message;
 
