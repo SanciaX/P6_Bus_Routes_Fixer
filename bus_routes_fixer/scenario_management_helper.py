@@ -323,11 +323,12 @@ class ScenarioManagementHelper:
                 return True
         return False
 
-    def _merge_close_nodes(self, error_node_pairs_indices):
-        '''
+    @staticmethod
+    def _merge_close_nodes(error_node_pairs_indices):
+        """
         Merge node pairs that are close to each other (within 10 nodes)
         The purpose is to avoid the shortest path searching to be too frequent
-        '''
+        """
         i = 0
         while i < len(error_node_pairs_indices)-1:
             if error_node_pairs_indices[i+1][1] - error_node_pairs_indices[i][0] < 10:

@@ -8,6 +8,7 @@ class VisumConnection:
     """Manages connections to PTV Visum."""
     def __init__(self, visum_version):
         self.visum_version = visum_version
+        self.visum = None
         self.connect()
 
     def connect(self):
